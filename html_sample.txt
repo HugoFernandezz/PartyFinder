@@ -1,0 +1,61 @@
+
+<!doctype html><html class="dark" lang="es"><head>
+  <meta charset="utf-8">
+  <title>
+    Luminata  | Entradas, Listas y Vips | Fourvenues  </title>
+  <meta name="description" content="Luminata en Murcia es una vibrante discoteca con música en vivo, espectáculos y ambiente festivo. ¡Ven a disfrutar de la mejor fiesta en la ciudad!">
+  <meta name="keywords" content="luminata
+luminata entradas
+entradas luminata
+luminata murcia
+entrada luminata
+luminata disco">
+  <meta name="robots" content="all">
+  <base href="/">
+
+  <!-- PWA -->
+  <link rel="apple-touch-icon" href="https://www.fourvenues.com/assets/images/fourvenues-square.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Fourvenues">
+  <meta name="apple-mobile-web-app-title" content="Fourvenues">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="msapplication-navbutton-color" content="#FFFFFF">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="msapplication-starturl" content="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, shrink-to-fit=0, viewport-fit=cover">
+  <script data-queue-fair-client="fourvenues" src="https://files.queue-fair.net/queue-fair-adapter.js"></script>
+
+      <link rel="manifest" type="application/manifest+json" href="https://www.fourvenues.com/clientes/manifest.php?lang=es&slug=luminata-disco&name=Luminata &icon25=https://www.fourvenues.com/images/25x25/https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/c8904411-231f-4327-9763-71e8c0074c00/w=100,h=100&icon192=https://www.fourvenues.com/images/192x192/https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/c8904411-231f-4327-9763-71e8c0074c00/w=100,h=100&icon512=https://www.fourvenues.com/images/512x512/https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/c8904411-231f-4327-9763-71e8c0074c00/w=100,h=100">
+    
+  <!-- Schema.org markup for Google+ -->
+  <meta itemprop="name" content="Luminata  | Entradas, Listas y Vips | Fourvenues">
+  <meta itemprop="description" content="Luminata en Murcia es una vibrante discoteca con música en vivo, espectáculos y ambiente festivo. ¡Ven a disfrutar de la mejor fiesta en la ciudad!">
+  <meta itemprop="image" content="https://www.fourvenues.com/assets/images/fourvenues-square.png">
+
+  <meta name="google-site-verification" content="JQghpXYRxFo-JM21NrLTxsSX5GYebSdgXtD5BVSSZy4" />
+
+  <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.fourvenues.com/es/luminata-disco">
+  <link rel="alternate" href="https://www.fourvenues.com/es/luminata-disco" hreflang="x-default">
+  <link rel="alternate" href="https://www.fourvenues.com/es/luminata-disco" hreflang="es"><link rel="alternate" href="https://www.fourvenues.com/en/luminata-disco" hreflang="en"><link rel="alternate" href="https://www.fourvenues.com/ca/luminata-disco" hreflang="ca"><link rel="alternate" href="https://www.fourvenues.com/it/luminata-disco" hreflang="it"><link rel="alternate" href="https://www.fourvenues.com/fr/luminata-disco" hreflang="fr"><link rel="alternate" href="https://www.fourvenues.com/pt/luminata-disco" hreflang="pt">
+  <!-- OpenGraph metadata-->
+  <meta property="og:locale" content="es_ES" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Luminata  | Fourvenues" />
+  <meta property="og:description" content="Luminata en Murcia es una vibrante discoteca con música en vivo, espectáculos y ambiente festivo. ¡Ven a disfrutar de la mejor fiesta en la ciudad! | Fourvenues" />
+  <meta property="og:url" content="/luminata-disco" />
+  <meta property="og:site_name" content="Luminata " />
+  <meta property="og:image" content="https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/c8904411-231f-4327-9763-71e8c0074c00/w=100,h=100" />
+
+  <!--   <meta property="og:url" content="https://www.fourvenues.com"/>
+  <meta property="og:site_name" content="Fourvenues" /> -->
+
+  <link rel="apple-touch-icon" sizes="57x57" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="https://www.fourvenues.com/assets/images/favicon/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" 

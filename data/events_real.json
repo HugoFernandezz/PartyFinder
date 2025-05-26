@@ -1,0 +1,250 @@
+{
+  "venues": [
+    {
+      "id": "1",
+      "name": "MACCAO OPEN AIR CLUB",
+      "description": "Eventos de MACCAO OPEN AIR CLUB en Murcia",
+      "address": "Paraje Los Valencianos, s/n, 30730 San Javier, Murcia, España",
+      "imageUrl": "https://images.unsplash.com/photo-1571266028243-d220c9c3b31f?w=800&h=600&fit=crop&crop=center",
+      "website": "https://www.fourvenues.com/es/hugo-fernandez-gil",
+      "phone": "+34 968 000 000",
+      "isActive": true,
+      "category": {
+        "id": "1",
+        "name": "Club",
+        "icon": "musical-notes"
+      }
+    },
+    {
+      "id": "2",
+      "name": "LUMINATA DISCO",
+      "description": "Eventos de LUMINATA DISCO en Murcia",
+      "address": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "imageUrl": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop&crop=center",
+      "website": "https://www.fourvenues.com/es/luminata-disco",
+      "phone": "+34 968 000 000",
+      "isActive": true,
+      "category": {
+        "id": "2",
+        "name": "Discoteca",
+        "icon": "musical-notes"
+      }
+    },
+    {
+      "id": "3",
+      "name": "EL CLUB by ODISEO",
+      "description": "Eventos de EL CLUB by ODISEO en Murcia",
+      "address": "Centro de Ocio ODISEO, Murcia, España",
+      "imageUrl": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop&crop=center",
+      "website": "https://www.fourvenues.com/es/el-club-by-odiseo",
+      "phone": "+34 968 000 000",
+      "isActive": true,
+      "category": {
+        "id": "3",
+        "name": "Discoteca",
+        "icon": "musical-notes"
+      }
+    }
+  ],
+  "parties": [
+    {
+      "id": "1",
+      "venueId": "2",
+      "venueName": "LUMINATA DISCO",
+      "title": "Jueves PLAY ON REGGAETON",
+      "description": "Evento exclusivo en LUMINATA DISCO. Una noche única con la mejor música y ambiente de Murcia.",
+      "date": "2025-05-29",
+      "startTime": "23:30",
+      "endTime": "07:00",
+      "price": 7,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/20bb50f5-abb1-42a9-70f8-643b8cccce00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/luminata-disco/events/jueves-play-on-reggaeton--29-05-2025-3BKH",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 150,
+      "tags": ["Fiestas"],
+      "venueAddress": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "PROMOCIÓN ENTRADA 1 COPA",
+          "description": "1 copa de alcohol estándar para consumir antes de las 2:30.",
+          "price": 7,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": true,
+          "isVip": false,
+          "restrictions": "Para consumir antes de las 2:30"
+        },
+        {
+          "id": "ticket_1",
+          "name": "ENTRADA 1 COPA",
+          "description": "1 copa de alcohol estándar para consumir antes de las 2:30.",
+          "price": 8,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": "Para consumir antes de las 2:30"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "venueId": "3",
+      "venueName": "EL CLUB by ODISEO",
+      "title": "YOU by ODISEO ESPECIAL EXAMENES 3",
+      "description": "Evento exclusivo en EL CLUB by ODISEO. Una noche única con la mejor música y ambiente de Murcia.",
+      "date": "2025-05-29",
+      "startTime": "23:00",
+      "endTime": "06:00",
+      "price": 8,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/201bd664-98b6-457a-1c1b-805a15ecaf00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/el-club-by-odiseo/events/you-by-odiseo-especial-examenes-3-29-05-2025-YX8T",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 150,
+      "tags": ["Fiestas"],
+      "venueAddress": "Centro de Ocio ODISEO, Murcia, España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "ENTRADA SUPER REDUCIDA",
+          "description": "Entrada con precio especial reducido.",
+          "price": 8,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_1",
+          "name": "ENTRADA REDUCIDA",
+          "description": "Entrada con precio reducido.",
+          "price": 10,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "venueId": "2",
+      "venueName": "LUMINATA DISCO",
+      "title": "Viernes REGGAETÓNCOMERCIAL",
+      "description": "Evento exclusivo en LUMINATA DISCO. Una noche única con la mejor música y ambiente de Murcia.",
+      "date": "2025-05-30",
+      "startTime": "23:30",
+      "endTime": "07:00",
+      "price": 8,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/20bb50f5-abb1-42a9-70f8-643b8cccce00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/luminata-disco/events/viernes-reggaetoncomercial-30-05-2025-ZMZ2",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 150,
+      "tags": ["Fiestas"],
+      "venueAddress": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "PROMOCIÓN ENTRADA 1 COPA",
+          "description": "1 copa de alcohol estándar para consumir antes de las 2:30.",
+          "price": 8,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": true,
+          "isVip": false,
+          "restrictions": "Para consumir antes de las 2:30"
+        },
+        {
+          "id": "ticket_1",
+          "name": "ENTRADA VIP 1 COPA SIN COLAS Y SIN HORA",
+          "description": "1 copa de alcohol estándar sin restricción de horario.",
+          "price": 11,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": true,
+          "restrictions": "Acceso sin colas - Sin restricción de horario"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "venueId": "2",
+      "venueName": "LUMINATA DISCO",
+      "title": "Sábado REGGAETÓNCOMERCIAL",
+      "description": "Evento exclusivo en LUMINATA DISCO. Una noche única con la mejor música y ambiente de Murcia.",
+      "date": "2025-05-31",
+      "startTime": "23:30",
+      "endTime": "07:00",
+      "price": 5,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/20bb50f5-abb1-42a9-70f8-643b8cccce00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/luminata-disco/events/sabado-reggaetoncomercial-31-05-2025-WF35",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 150,
+      "tags": ["Fiestas"],
+      "venueAddress": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "PROMOCIÓN ENTRADA 1 COPA",
+          "description": "1 copa de alcohol estándar para consumir antes de las 2:30.",
+          "price": 5,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": true,
+          "isVip": false,
+          "restrictions": "Para consumir antes de las 2:30"
+        },
+        {
+          "id": "ticket_1",
+          "name": "PROMOCIÓN ENTRADA VIP 1 COPA SIN COLAS Y SIN HORA",
+          "description": "1 copa de alcohol estándar sin restricción de horario.",
+          "price": 6,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": true,
+          "isVip": true,
+          "restrictions": "Acceso sin colas - Sin restricción de horario"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "venueId": "1",
+      "venueName": "MACCAO OPEN AIR CLUB",
+      "title": "MAR MENOR FEST",
+      "description": "Festival de música electrónica en MACCAO OPEN AIR CLUB. Una experiencia única con los mejores DJs, ambiente espectacular y la mejor música del momento.",
+      "date": "2025-06-05",
+      "startTime": "06:00",
+      "endTime": "02:00",
+      "price": 10,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/f06362f4-c593-4d08-c498-48e8e58bd300/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/hugo-fernandez-gil/events/mar-menor-fest-05-06-2025-CZ7W",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 150,
+      "tags": ["Fiestas"],
+      "venueAddress": "Paraje Los Valencianos, s/n, 30730 San Javier, Murcia, España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "PRIMER TRAMO",
+          "description": "Entrada al evento.",
+          "price": 10,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        }
+      ]
+    }
+  ]
+}

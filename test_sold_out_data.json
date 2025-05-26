@@ -1,0 +1,245 @@
+{
+  "venues": [
+    {
+      "id": "1",
+      "name": "LUMINATA DISCO",
+      "description": "Discoteca en Murcia",
+      "address": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "imageUrl": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop&crop=center",
+      "website": "https://www.fourvenues.com/es/luminata-disco",
+      "phone": "+34 968 000 000",
+      "isActive": true,
+      "category": {
+        "id": "1",
+        "name": "Discoteca",
+        "icon": "musical-notes"
+      }
+    },
+    {
+      "id": "2",
+      "name": "EL CLUB by ODISEO",
+      "description": "Eventos de EL CLUB by ODISEO en Murcia",
+      "address": "Centro de Ocio ODISEO, Murcia, España",
+      "imageUrl": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop&crop=center",
+      "website": "https://www.fourvenues.com/es/el-club-by-odiseo",
+      "phone": "+34 968 000 000",
+      "isActive": true,
+      "category": {
+        "id": "2",
+        "name": "Discoteca",
+        "icon": "musical-notes"
+      }
+    }
+  ],
+  "parties": [
+    {
+      "id": "1",
+      "venueId": "1",
+      "venueName": "LUMINATA DISCO",
+      "title": "Viernes REGGAETÓN - DISPONIBLE",
+      "description": "Evento con entradas disponibles. Una noche única con la mejor música y ambiente de Murcia.",
+      "date": "2025-05-27",
+      "startTime": "23:30",
+      "endTime": "07:00",
+      "price": 8,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/20bb50f5-abb1-42a9-70f8-643b8cccce00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/luminata-disco/events/test-disponible",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 150,
+      "tags": [
+        "Fiestas"
+      ],
+      "venueAddress": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "ENTRADA PROMOCIÓN",
+          "description": "Entrada con precio promocional.",
+          "price": 8,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": true,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_1",
+          "name": "ENTRADA GENERAL",
+          "description": "Entrada general al evento.",
+          "price": 12,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "venueId": "1",
+      "venueName": "LUMINATA DISCO",
+      "title": "Sábado COMERCIAL - AGOTADO",
+      "description": "Evento completamente agotado. Todas las entradas han sido vendidas.",
+      "date": "2025-05-28",
+      "startTime": "23:30",
+      "endTime": "07:00",
+      "price": 10,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/20bb50f5-abb1-42a9-70f8-643b8cccce00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/luminata-disco/events/test-agotado",
+      "isAvailable": false,
+      "capacity": 300,
+      "soldTickets": 300,
+      "tags": [
+        "Fiestas"
+      ],
+      "venueAddress": "Centrofama, Calle Teniente General Gutierrez Mellado, 9, 30008 Murcia (Murcia), España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "ENTRADA PROMOCIÓN",
+          "description": "Entrada con precio promocional.",
+          "price": 10,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": true,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_1",
+          "name": "ENTRADA GENERAL",
+          "description": "Entrada general al evento.",
+          "price": 15,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_2",
+          "name": "ENTRADA VIP",
+          "description": "Entrada VIP con acceso preferente.",
+          "price": 20,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": true,
+          "restrictions": ""
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "venueId": "2",
+      "venueName": "EL CLUB by ODISEO",
+      "title": "YOU by ODISEO - POCAS ENTRADAS",
+      "description": "Evento con pocas entradas disponibles. ¡Últimas oportunidades!",
+      "date": "2025-05-29",
+      "startTime": "23:00",
+      "endTime": "06:00",
+      "price": 8,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/201bd664-98b6-457a-1c1b-805a15ecaf00/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/el-club-by-odiseo/events/test-pocas",
+      "isAvailable": true,
+      "capacity": 300,
+      "soldTickets": 280,
+      "tags": [
+        "Fiestas"
+      ],
+      "venueAddress": "Centro de Ocio ODISEO, Murcia, España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "ENTRADA SUPER REDUCIDA",
+          "description": "Entrada con precio especial reducido.",
+          "price": 8,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_1",
+          "name": "ENTRADA REDUCIDA",
+          "description": "Entrada con precio reducido.",
+          "price": 10,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_2",
+          "name": "ENTRADA GENERAL",
+          "description": "Entrada general al evento.",
+          "price": 15,
+          "isAvailable": true,
+          "isSoldOut": false,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "venueId": "2",
+      "venueName": "EL CLUB by ODISEO",
+      "title": "PASSION FRUIT - SOLD OUT",
+      "description": "Evento especial completamente agotado. ¡Gracias por el apoyo!",
+      "date": "2025-05-30",
+      "startTime": "23:00",
+      "endTime": "06:00",
+      "price": 12,
+      "imageUrl": "https://fourvenues.com/cdn-cgi/imagedelivery/kWuoTchaMsk7Xnc_FNem7A/31454263-cafa-4bbf-5afc-0ea72d9ea300/w=550",
+      "ticketUrl": "https://www.fourvenues.com/es/el-club-by-odiseo/events/test-sold-out",
+      "isAvailable": false,
+      "capacity": 300,
+      "soldTickets": 300,
+      "tags": [
+        "Fiestas"
+      ],
+      "venueAddress": "Centro de Ocio ODISEO, Murcia, España",
+      "ticketTypes": [
+        {
+          "id": "ticket_0",
+          "name": "ANTICIPADA REDUCIDA",
+          "description": "Entrada con precio reducido.",
+          "price": 12,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_1",
+          "name": "ANTICIPADA GENERAL",
+          "description": "Entrada general al evento.",
+          "price": 15,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": false,
+          "restrictions": ""
+        },
+        {
+          "id": "ticket_2",
+          "name": "ANTICIPADA VIP",
+          "description": "Entrada VIP con acceso preferente.",
+          "price": 25,
+          "isAvailable": false,
+          "isSoldOut": true,
+          "isPromotion": false,
+          "isVip": true,
+          "restrictions": ""
+        }
+      ]
+    }
+  ]
+}
