@@ -63,9 +63,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     try {
       setLoading(true);
       
-      const response = await apiService.getTodaysParties();
+      const response = await apiService.getCompleteData();
       if (response.success) {
-        setParties(response.data);
+        setParties(response.data.parties);
       } else {
         Alert.alert('Error', response.error || 'Error al cargar las fiestas');
         setParties([]);

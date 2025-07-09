@@ -25,9 +25,11 @@ export interface TicketType {
   price: number;
   isAvailable: boolean;
   isSoldOut: boolean;
+  fewLeft?: boolean; // <-- AÑADIDO: Para 'quedan_pocas'
   isPromotion?: boolean;
   isVip?: boolean;
   restrictions?: string; // Ej: "para consumir antes de las 2:30"
+  purchaseUrl?: string; // <-- AÑADIDO: Para el 'link_compra'
 }
 
 export interface Party {
@@ -43,6 +45,7 @@ export interface Party {
   imageUrl: string;
   ticketUrl: string;
   isAvailable: boolean;
+  fewLeft?: boolean; // <-- AÑADIDO
   capacity: number;
   soldTickets: number;
   tags: string[];

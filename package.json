@@ -10,20 +10,15 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "clear-cache": "expo start --clear",
-    "reset": "expo start --clear --reset-cache",
-    "server": "node server.js",
-    "dev": "concurrently \"npm run server\" \"npm run start\"",
-    "deploy": "npm run clear-cache && npm run dev"
+    "reset": "expo start --clear --reset-cache"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@react-navigation/bottom-tabs": "^7.3.13",
     "@react-navigation/native": "^7.1.9",
     "@react-navigation/stack": "^7.3.2",
-    "cors": "^2.8.5",
     "expo": "~53.0.9",
     "expo-status-bar": "~2.2.3",
-    "express": "^5.1.0",
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-gesture-handler": "^2.25.0",
@@ -36,8 +31,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
-    "typescript": "~5.8.3",
-    "concurrently": "^8.2.2"
+    "typescript": "~5.8.3"
   },
   "private": true
 }

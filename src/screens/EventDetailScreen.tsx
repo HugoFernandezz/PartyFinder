@@ -28,7 +28,17 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
   const { party } = route.params;
 
   const handleBuyTickets = () => {
-    Linking.openURL(party.ticketUrl);
+    // Si la URL principal no existe, intentar abrir la del primer ticket disponible
+    const urlToOpen = party.ticketUrl || party.ticketTypes?.find(t => t.isAvailable && t.purchaseUrl)?.purchaseUrl;
+    if (urlToOpen) {
+      Linking.openURL(urlToOpen);
+    }
+  };
+
+  const handleBuyTicketType = (ticket: TicketType) => {
+    if (ticket.purchaseUrl) {
+      Linking.openURL(ticket.purchaseUrl);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -148,48 +158,64 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
                 <Text style={styles.sectionTitle}>Tipos de Entrada</Text>
               </View>
               <View style={styles.ticketTypesContainer}>
-                {party.ticketTypes.map((ticket, index) => (
-                  <View key={ticket.id} style={styles.ticketTypeCard}>
-                    <View style={styles.ticketTypeHeader}>
-                      <View style={styles.ticketTypeInfo}>
-                        <Text style={styles.ticketTypeName}>{ticket.name}</Text>
-                        {ticket.isPromotion && (
-                          <View style={styles.promotionBadge}>
-                            <Text style={styles.promotionText}>PROMOCIÓN</Text>
-                          </View>
-                        )}
-                        {ticket.isVip && (
-                          <View style={styles.vipBadge}>
-                            <Text style={styles.vipText}>VIP</Text>
-                          </View>
-                        )}
+                {party.ticketTypes.map((ticket, index) => {
+                  const isClickable = ticket.isAvailable && !!ticket.purchaseUrl;
+                  return (
+                    <TouchableOpacity 
+                      key={ticket.id} 
+                      style={[
+                        styles.ticketTypeCard,
+                        !isClickable && styles.ticketTypeCardDisabled
+                      ]}
+                      onPress={() => isClickable && handleBuyTicketType(ticket)}
+                      disabled={!isClickable}
+                    >
+                      <View style={styles.ticketTypeHeader}>
+                        <View style={styles.ticketTypeInfo}>
+                          <Text style={styles.ticketTypeName}>{ticket.name}</Text>
+                          {ticket.fewLeft && !ticket.isSoldOut && (
+                            <View style={styles.fewLeftBadge}>
+                              <Text style={styles.fewLeftText}>¡ÚLTIMAS ENTRADAS!</Text>
+                            </View>
+                          )}
+                          {ticket.isPromotion && (
+                            <View style={styles.promotionBadge}>
+                              <Text style={styles.promotionText}>PROMOCIÓN</Text>
+                            </View>
+                          )}
+                          {ticket.isVip && (
+                            <View style={styles.vipBadge}>
+                              <Text style={styles.vipText}>VIP</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.ticketTypePrice}>{ticket.price}€</Text>
                       </View>
-                      <Text style={styles.ticketTypePrice}>{ticket.price}€</Text>
-                    </View>
-                    
-                    {ticket.description && (
-                      <Text style={styles.ticketTypeDescription}>{ticket.description}</Text>
-                    )}
-                    
-                    {ticket.restrictions && (
-                      <Text style={styles.ticketTypeRestrictions}>⚠️ {ticket.restrictions}</Text>
-                    )}
-                    
-                    <View style={styles.ticketTypeFooter}>
-                      <View style={[
-                        styles.availabilityBadge,
-                        { backgroundColor: ticket.isAvailable ? '#dcfce7' : '#fee2e2' }
-                      ]}>
-                        <Text style={[
-                          styles.availabilityBadgeText,
-                          { color: ticket.isAvailable ? '#16a34a' : '#dc2626' }
+                      
+                      {ticket.description && (
+                        <Text style={styles.ticketTypeDescription}>{ticket.description}</Text>
+                      )}
+                      
+                      {ticket.restrictions && (
+                        <Text style={styles.ticketTypeRestrictions}>⚠️ {ticket.restrictions}</Text>
+                      )}
+                      
+                      <View style={styles.ticketTypeFooter}>
+                        <View style={[
+                          styles.availabilityBadge,
+                          { backgroundColor: ticket.isAvailable ? '#dcfce7' : '#fee2e2' }
                         ]}>
-                          {ticket.isAvailable ? 'Disponible' : 'Agotado'}
-                        </Text>
+                          <Text style={[
+                            styles.availabilityBadgeText,
+                            { color: ticket.isAvailable ? '#16a34a' : '#dc2626' }
+                          ]}>
+                            {ticket.isAvailable ? 'Disponible' : 'Agotado'}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  </View>
-                ))}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -228,10 +254,10 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
         <TouchableOpacity 
           style={[
             styles.buyButton,
-            !party.isAvailable && styles.buyButtonDisabled
+            (!party.isAvailable || !party.ticketUrl) && styles.buyButtonDisabled
           ]}
           onPress={handleBuyTickets}
-          disabled={!party.isAvailable}
+          disabled={!party.isAvailable || !party.ticketUrl}
         >
           <Ionicons 
             name="ticket-outline" 
@@ -445,6 +471,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  ticketTypeCardDisabled: {
+    backgroundColor: '#f9fafb',
+    borderColor: '#e5e7eb',
+  },
   ticketTypeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -460,6 +490,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1f2937',
     marginBottom: 6,
+  },
+  fewLeftBadge: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#f59e0b',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginBottom: 4,
+    alignSelf: 'flex-start',
+  },
+  fewLeftText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#d97706',
   },
   ticketTypePrice: {
     fontSize: 20,

@@ -1,70 +1,77 @@
 @echo off
-echo 🚀 Desplegando PartyFinder...
 echo.
-
-echo 🧹 Paso 1: Limpiando cache...
-call clear-cache.bat
-
+echo =========================================
+echo  🚀 SCRIPT DE DESPLIEGUE DE PARTYFINDER 🚀
+echo =========================================
 echo.
-echo 🔧 Paso 1.5: Verificando scraper...
-echo Probando el nuevo scraper simplificado...
-python simple_scraper.py --json-only > nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✅ Scraper funcionando correctamente
-) else (
-    echo ❌ Error en el scraper, pero continuando con datos de ejemplo
-)
-
+echo Este script te guiará para compilar tu aplicación para Android usando EAS.
 echo.
-echo 🔧 Paso 2: Verificando configuración...
+echo Requisitos:
+echo 1. Tener una cuenta de Expo (https://expo.dev)
+echo 2. Haber instalado EAS CLI: npm install -g eas-cli
+echo 3. Haber iniciado sesion: eas login
+echo.
+pause
 
-echo 📡 Verificando servidor...
-node -e "
-const http = require('http');
-const options = {
-  hostname: 'localhost',
-  port: 3001,
-  path: '/api/health',
-  method: 'GET',
-  timeout: 5000
-};
+:menu
+cls
+echo.
+echo Selecciona una opcion de despliegue:
+echo.
+echo   1. Compilar para Android (genera un .apk para instalar)
+echo   2. Publicar una actualizacion (OTA Update)
+echo   3. Salir
+echo.
+set /p choice="Introduce tu opcion (1-3): "
 
-const req = http.request(options, (res) => {
-  console.log('✅ Servidor respondiendo en puerto 3001');
-  process.exit(0);
-});
+if "%choice%"=="1" goto build_android
+if "%choice%"=="2" goto publish_update
+if "%choice%"=="3" exit /b
 
-req.on('error', (err) => {
-  console.log('❌ Servidor no disponible en puerto 3001');
-  console.log('🔄 Iniciando servidor...');
-  process.exit(1);
-});
+echo Opcion no valida.
+pause
+goto menu
 
-req.on('timeout', () => {
-  console.log('⏰ Timeout conectando al servidor');
-  req.destroy();
-  process.exit(1);
-});
+:build_android
+cls
+echo.
+echo =================================
+echo  COMPILANDO APP PARA ANDROID 📱
+echo =================================
+echo.
+echo Se iniciara el proceso de compilacion de EAS Build.
+echo Se te pedira que confirmes la cuenta de Expo y el proyecto.
+echo.
+echo La compilacion puede tardar entre 15-30 minutos en los servidores de Expo.
+echo Recibiras un enlace para seguir el progreso y descargar el .apk cuando este listo.
+echo.
+pause
 
-req.end();
-"
-
-if %errorlevel% neq 0 (
-    echo 🔄 Iniciando servidor en segundo plano...
-    start /b node server.js
-    timeout /t 5 /nobreak >nul
-)
+eas build --platform android --profile preview
 
 echo.
-echo 🎯 Paso 3: Iniciando aplicación...
-echo 📱 La aplicación se abrirá en tu navegador y/o dispositivo
-echo 🌐 URL del servidor: http://localhost:3001
-echo 📲 Escanea el QR code para abrir en tu dispositivo móvil
+echo ✅ Proceso de compilacion iniciado.
 echo.
+pause
+goto menu
 
-echo 🚀 Iniciando Expo...
-npm start
+:publish_update
+cls
+echo.
+echo ===================================
+echo  PUBLICANDO ACTUALIZACION (OTA) 🔄
+echo ===================================
+echo.
+echo Esto publicara los cambios de tu codigo (JavaScript/TypeScript)
+echo sin necesidad de crear un nuevo .apk. Los usuarios recibiran
+echo la actualizacion la proxima vez que abran la app.
+echo.
+pause
+
+eas update
 
 echo.
-echo ✅ Despliegue completado!
-pause 
+echo ✅ Actualizacion publicada exitosamente.
+echo.
+pause
+goto menu 
