@@ -44,7 +44,10 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
     
     // Abrir el link inmediatamente, sin esperar la animación
     if (ticket.purchaseUrl) {
-      Linking.openURL(ticket.purchaseUrl);
+      Linking.openURL(ticket.purchaseUrl).catch(error => {
+        console.error('Error abriendo URL:', error);
+        // Podríamos mostrar un alert aquí si es necesario
+      });
     }
   };
 

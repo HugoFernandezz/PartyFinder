@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Party, TicketType } from '../types';
+import { Party } from '../types';
 import { TicketCard } from '../components/TicketCard';
 
 const { width } = Dimensions.get('window');

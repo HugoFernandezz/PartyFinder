@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SectionList,
-  Alert,
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
@@ -30,11 +29,17 @@ interface SectionData {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [parties, setParties] = useState<Party[]>([]);
-  // El estado ahora será para las secciones
-  const [partySections, setPartySections] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVenue, setSelectedVenue] = useState<string>('Todas');
   const [availableVenues, setAvailableVenues] = useState<string[]>(['Todas']);
+  
+  // Usar useRef para mantener referencia actual de parties sin re-renders
+  const partiesRef = useRef<Party[]>(parties);
+  
+  // Actualizar la referencia cuando parties cambie
+  useEffect(() => {
+    partiesRef.current = parties;
+  }, [parties]);
 
   useEffect(() => {
     loadParties();
@@ -42,28 +47,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     // Timer para verificar nuevos datos automáticamente cada hora
     const backgroundUpdateInterval = setInterval(async () => {
       try {
-        console.log('🔄 Verificando nuevos datos en segundo plano...');
         const response = await apiService.getCompleteData();
         if (response.success && response.data.parties.length > 0) {
-          // Solo actualizar si hay cambios en los datos
-          if (JSON.stringify(response.data.parties) !== JSON.stringify(parties)) {
-            console.log('✅ Nuevos datos encontrados, actualizando...');
-            setParties(response.data.parties);
+          // Comparación más eficiente: verificar longitud y IDs usando la ref
+          const newParties = response.data.parties;
+          const currentParties = partiesRef.current;
+          const hasChanges = newParties.length !== currentParties.length || 
+                           newParties.some((party, index) => 
+                             !currentParties[index] || currentParties[index].id !== party.id
+                           );
+          
+          if (hasChanges) {
+            setParties(newParties);
           }
         }
       } catch (error) {
-        console.log('⚠️ Error en actualización automática:', error);
+        // Error silenciado para no spam en producción
       }
     }, 3600000); // Cada hora
 
     return () => clearInterval(backgroundUpdateInterval);
-  }, []);
-
-  useEffect(() => {
-    // La función que procesa ahora se llamará desde un useMemo
-    const processedParties = processParties();
-    setPartySections(processedParties);
-  }, [selectedVenue, parties]);
+  }, []); // Sin dependencias para evitar bucle infinito
 
   useEffect(() => {
     // Extraer todas las discotecas únicas de los eventos
@@ -76,28 +80,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setAvailableVenues(sortedVenues);
   }, [parties]);
 
-  const loadParties = async () => {
-    try {
-      setLoading(true);
-      
-      const response = await apiService.getCompleteData();
-      
-      if (response.success) {
-        setParties(response.data.parties);
-      } else {
-        // Si no hay datos disponibles aún, mantener lista vacía sin mostrar error
-        setParties([]);
-      }
-      
-    } catch (error) {
-      console.error('Error loading parties:', error);
-      setParties([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const processParties = (): SectionData[] => {
+  // Optimizar processParties usando useMemo
+  const partySections = useMemo((): SectionData[] => {
     let filtered = parties;
 
     // Filtrar por discoteca seleccionada
@@ -128,24 +112,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: new Date(dateKey).toLocaleDateString(locale, options),
       data: sections[dateKey],
     }));
+  }, [selectedVenue, parties]);
+
+  const loadParties = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await apiService.getCompleteData();
+      
+      if (response.success) {
+        setParties(response.data.parties);
+      } else {
+        // Si no hay datos disponibles aún, mantener lista vacía sin mostrar error
+        setParties([]);
+      }
+      
+    } catch (error) {
+      console.error('Error loading parties:', error);
+      setParties([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVenueSelect = (venue: string) => {
+  const handleVenueSelect = useCallback((venue: string) => {
     setSelectedVenue(venue);
-  };
+  }, []);
 
-  const handlePartyPress = (party: Party) => {
+  const handlePartyPress = useCallback((party: Party) => {
     navigation.navigate('EventDetail', { party });
-  };
+  }, [navigation]);
 
-  const renderPartyCard = ({ item }: { item: Party }) => (
+  const renderPartyCard = useCallback(({ item }: { item: Party }) => (
     <PartyCard 
       party={item} 
       onPress={() => handlePartyPress(item)}
     />
-  );
+  ), [handlePartyPress]);
 
-  const renderSectionHeader = ({ section: { title } }: { section: SectionData }) => {
+  const renderSectionHeader = useCallback(({ section: { title } }: { section: SectionData }) => {
     // Separar el día de la semana del resto de la fecha
     const parts = title.split(', ');
     const dayOfWeek = parts[0];
@@ -162,7 +167,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         </View>
       </View>
     );
-  };
+  }, []);
 
   const renderHeader = () => (
     <View>

@@ -1,114 +1,155 @@
-# API Generador de Imágenes Instagram
+# PartyFinder Murcia 🎉
 
-API web para generar imágenes personalizadas estilo Instagram Stories de 1080x1920 píxeles.
+Una aplicación móvil para descubrir las mejores fiestas y eventos nocturnos en Murcia.
 
-**📍 Ubicación del proyecto:** `C:\Users\hugaz\Documents\Proyectos Cursor\WEB-Images_Instagram`
+## 🚀 Características Principales
 
-## 🚀 Características
+- **Descubrimiento de Eventos**: Navega por los mejores eventos de la vida nocturna murciana
+- **Filtrado por Venue**: Filtra eventos por discoteca específica
+- **Organización por Fechas**: Eventos agrupados por fecha con headers sticky
+- **Compra de Entradas**: Enlaces directos a la compra de tickets individuales
+- **Eventos de Transporte**: Identificación especial para eventos con bus incluido
+- **Sistema de Caché Inteligente**: Actualizaciones automáticas desde las 20:30h Madrid
 
-- Genera imágenes PNG de alta calidad (1080x1920)
-- Personalización completa de textos
-- Soporte para imágenes de perfil personalizadas
-- API REST simple y fácil de usar
-- Interfaz web incluida para pruebas
+## 🔧 Tecnologías Utilizadas
 
-## 📋 Requisitos
+- **React Native** + **Expo** para desarrollo móvil multiplataforma
+- **TypeScript** para tipado estático
+- **React Navigation** para navegación entre pantallas
+- **JSONBin API** para almacenamiento de datos
+- **Expo Vector Icons** para iconografía
 
-- Node.js 14 o superior
+## 📱 Funcionalidades
+
+### Pantalla Principal (HomeScreen)
+- Lista de eventos organizados por fecha
+- Selector horizontal de discotecas
+- Indicadores visuales para eventos agotados y últimas entradas
+- Identificación especial de eventos con transporte (bus)
+
+### Pantalla de Detalle (EventDetailScreen)
+- Información completa del evento
+- Tarjetas de tickets individuales con estados (disponible/últimas/agotado)
+- Botones interactivos para compra de entradas
+- Información de transporte para eventos de bus
+
+### Sistema de Tickets
+- **TicketCard**: Componente interactivo con animaciones
+- Estados visuales claros (disponible, pocas quedan, agotado)
+- Apertura directa del navegador para compra
+- Manejo de errores en la apertura de URLs
+
+## 🎯 Optimizaciones Recientes (2024)
+
+### Rendimiento y Memoria
+- ✅ **Eliminación de Memory Leaks**: Corregidas dependencias en useEffect
+- ✅ **Optimización con useMemo**: Procesamiento de eventos optimizado
+- ✅ **useCallback**: Callbacks optimizados para evitar re-renders
+- ✅ **Comparación Eficiente**: Reemplazado JSON.stringify por comparación directa
+
+### Limpieza de Código
+- ✅ **Eliminación de Debug**: Removidos todos los console.log de producción
+- ✅ **Dependencias Limpiadas**: Eliminada @react-navigation/bottom-tabs no utilizada
+- ✅ **Imports Optimizados**: Removidos imports no utilizados
+- ✅ **Funciones Muertas**: Eliminadas funciones no utilizadas del API service
+
+### Gestión de API
+- ✅ **Lógica de Horarios Restaurada**: Sistema de actualización a las 20:30h Madrid funcionando
+- ✅ **Caché Inteligente**: Optimizado para mejores tiempos de respuesta
+- ✅ **Manejo de Errores**: Mejorado en carga de imágenes y navegación
+
+### Tipos y Estructura
+- ✅ **Tipos Optimizados**: Campos opcionales donde corresponde
+- ✅ **Componentes Limpiados**: Eliminado ConnectionStatus no utilizado
+- ✅ **Estructura Mejorada**: Código más mantenible y eficiente
+
+## 🏗️ Arquitectura del Proyecto
+
+```
+src/
+├── components/          # Componentes reutilizables
+│   ├── Navigation.tsx   # Configuración de navegación
+│   ├── PartyCard.tsx    # Tarjeta de evento
+│   ├── TicketCard.tsx   # Tarjeta de ticket individual
+│   └── TagFilter.tsx    # Filtro de etiquetas
+├── screens/            # Pantallas principales
+│   ├── HomeScreen.tsx   # Pantalla principal de eventos
+│   ├── EventDetailScreen.tsx # Detalle de evento
+│   ├── VenuesScreen.tsx # Lista de venues
+│   └── ProfileScreen.tsx # Perfil de usuario
+├── services/           # Servicios y APIs
+│   └── api.ts          # Servicio de API con caché inteligente
+├── types/              # Definiciones de tipos TypeScript
+│   └── index.ts        # Tipos principales
+└── utils/              # Utilidades
+```
+
+## 🚀 Instalación y Desarrollo
+
+### Requisitos Previos
+- Node.js 18+ 
 - npm o yarn
+- Expo CLI
 
-## 🛠️ Instalación
-
-1. El proyecto ya está instalado en: `C:\Users\hugaz\Documents\Proyectos Cursor\WEB-Images_Instagram`
-2. Las dependencias ya están instaladas y listas
-3. El servidor está configurado y funcionando
-
-## 🏃‍♂️ Ejecutar el proyecto
-
-### Modo producción:
+### Instalación
 ```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd PartyFinder
+
+# Instalar dependencias
+npm install
+
+# Iniciar en modo desarrollo
 npm start
 ```
 
-### Modo desarrollo (con auto-reload):
+### Scripts Disponibles
 ```bash
-npm run dev
+npm start          # Iniciar servidor de desarrollo
+npm run android    # Abrir en Android
+npm run ios        # Abrir en iOS  
+npm run web        # Abrir en navegador web
+npm run clear-cache # Limpiar caché de Expo
 ```
 
-### Inicio rápido con script:
-```bash
-# Doble clic en start.bat
-```
+## 🔄 Sistema de Actualizaciones
 
-El servidor estará disponible en `http://localhost:3000`
+La aplicación utiliza un sistema inteligente de caché que:
+- **Actualiza datos automáticamente** a las 20:30h (hora de Madrid)
+- **Verifica cambios** cada hora en segundo plano
+- **Mantiene datos offline** cuando no hay conexión
+- **Optimiza peticiones** evitando llamadas innecesarias
 
-## 📖 Uso de la API
+## 🎨 Diseño y UX
 
-### Endpoints disponibles
+- **Interfaz Moderna**: Diseño limpio con colores vibrantes
+- **Navegación Intuitiva**: Stack navigation simple y efectiva
+- **Animaciones Suaves**: Transiciones y feedback visual
+- **Estados Visuales**: Indicadores claros para diferentes estados de tickets
+- **Responsive**: Adaptado para diferentes tamaños de pantalla
 
-#### POST /api/generate-image
-Genera una imagen con todos los parámetros personalizables.
+## 📊 Estado del Proyecto
 
-**Parámetros:**
-- `userName` (string, requerido): Nombre del usuario
-- `user` (string, requerido): Handle del usuario (ej: @usuario)
-- `message` (string, requerido): Mensaje a mostrar
-- `profileImage` (file, opcional): Imagen de perfil
+**✅ PROYECTO OPTIMIZADO Y FUNCIONAL**
 
-**Ejemplo con cURL:**
-```bash
-curl -X POST http://localhost:3000/api/generate-image \
-  -F "userName=UDIA" \
-  -F "user=@udia.es" \
-  -F "message=Aquí va tu texto de ejemplo" \
-  -F "profileImage=@/ruta/a/imagen.jpg" \
-  --output imagen-generada.png
-```
-
-#### GET /api/generate-image
-Versión simplificada sin imagen de perfil.
-
-**Ejemplo:**
-```
-http://localhost:3000/api/generate-image?userName=UDIA&user=@udia.es&message=Tu%20mensaje%20aquí
-```
-
-## 🎨 Interfaz Web
-
-Accede a `http://localhost:3000` para usar la interfaz web interactiva que incluye:
-- Formulario para generar imágenes
-- Vista previa en tiempo real
-- Descarga directa de imágenes
-- Documentación completa
-
-## 🔧 Configuración
-
-Puedes cambiar el puerto del servidor creando un archivo `.env`:
-
-```env
-PORT=3001
-```
-
-## 📝 Notas
-
-- Las imágenes se generan en memoria, no se guardan en el servidor
-- El límite de tamaño para imágenes de perfil es de 5MB
-- Los formatos de imagen soportados son: JPG, PNG, GIF, WebP
-
-## ✅ Estado del Proyecto
-
-**🎉 PROYECTO MOVIDO Y FUNCIONAL 🎉**
-
-- ✅ Ubicación actualizada: `WEB-Images_Instagram`
-- ✅ Dependencias instaladas correctamente
-- ✅ Servidor funcionando en puerto 3000
-- ✅ API generando imágenes correctamente
-- ✅ Imagen de verificación creada: `verificacion.png`
+- ✅ Rendimiento mejorado significativamente
+- ✅ Memory leaks corregidos
+- ✅ Código limpio y mantenible
+- ✅ API service optimizado
+- ✅ Sistema de caché funcionando correctamente
+- ✅ Tipos TypeScript optimizados
+- ✅ Componentes optimizados con React hooks
 
 ## 🤝 Contribuciones
 
-Las contribuciones son bienvenidas. Por favor, abre un issue o pull request.
+Las contribuciones son bienvenidas. Por favor:
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/nueva-feature`)
+3. Commit tus cambios (`git commit -am 'Añadir nueva feature'`)
+4. Push a la rama (`git push origin feature/nueva-feature`)
+5. Abre un Pull Request
 
 ## 📄 Licencia
 
-MIT 
+MIT License - ver archivo LICENSE para más detalles. 

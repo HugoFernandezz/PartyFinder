@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Venue } from '../types';
 import { apiService } from '../services/api';
-import { ConnectionStatus } from '../components/ConnectionStatus';
 
 interface VenueCardProps {
   venue: Venue;
@@ -93,9 +92,9 @@ export const VenuesScreen: React.FC = () => {
     try {
       setLoading(true);
       
-      const response = await apiService.getActiveVenues();
+      const response = await apiService.getCompleteData();
       if (response.success) {
-        setVenues(response.data);
+        setVenues(response.data.venues);
       } else {
         Alert.alert('Error', response.error || 'Error al cargar los locales');
         setVenues([]);
@@ -141,7 +140,6 @@ export const VenuesScreen: React.FC = () => {
       <Text style={styles.subtitle}>
         Descubre todos los lugares de ocio nocturno
       </Text>
-      <ConnectionStatus />
     </View>
   );
 

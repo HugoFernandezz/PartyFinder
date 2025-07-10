@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Party } from '../types';
@@ -22,6 +22,12 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
   const hasFewLeft = party.fewLeft && !isSoldOut;
   const isBusEvent = party.title.toUpperCase().includes('BUS');
 
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <TouchableOpacity 
       style={styles.card} 
@@ -29,8 +35,12 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
     >
       <View style={styles.imageContainer}>
         <Image
-          source={getPartyImageSource(party)}
+          source={imageError ? 
+            require('../../assets/icon.png') : // Fallback image
+            getPartyImageSource(party)
+          }
           style={styles.image}
+          onError={handleImageError}
         />
         
         {/* Indicador de evento de bus */}

@@ -21,15 +21,15 @@ export interface Venue {
 export interface TicketType {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
   isAvailable: boolean;
   isSoldOut: boolean;
-  fewLeft?: boolean; // <-- AÑADIDO: Para 'quedan_pocas'
+  fewLeft?: boolean;
   isPromotion?: boolean;
   isVip?: boolean;
-  restrictions?: string; // Ej: "para consumir antes de las 2:30"
-  purchaseUrl?: string; // <-- AÑADIDO: Para el 'link_compra'
+  restrictions?: string;
+  purchaseUrl?: string;
 }
 
 export interface Party {
@@ -43,14 +43,14 @@ export interface Party {
   endTime: string; // HH:MM format
   price: number; // Precio mínimo para mostrar en la lista
   imageUrl: string;
-  ticketUrl: string;
+  ticketUrl?: string;
   isAvailable: boolean;
-  fewLeft?: boolean; // <-- AÑADIDO
-  capacity: number;
-  soldTickets: number;
+  fewLeft?: boolean;
+  capacity?: number;
+  soldTickets?: number;
   tags: string[];
-  venueAddress?: string; // Dirección del venue
-  ticketTypes?: TicketType[]; // Tipos de entrada disponibles
+  venueAddress?: string;
+  ticketTypes?: TicketType[];
 }
 
 export interface TicketPurchase {
