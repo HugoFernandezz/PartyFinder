@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Party } from '../types';
+import { Party, TicketType } from '../types';
 
 const { width } = Dimensions.get('window');
 
@@ -23,6 +23,13 @@ interface EventDetailScreenProps {
   };
   navigation: any;
 }
+
+const getPartyImageSource = (party: Party) => {
+  if (party.venueName.toUpperCase() === 'MACCÄO OPEN AIR CLUB') {
+    return require('../../assets/Maccao.jpeg'); 
+  }
+  return { uri: party.imageUrl };
+};
 
 export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, navigation }) => {
   const { party } = route.params;
@@ -61,7 +68,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
         {/* Header con imagen */}
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: party.imageUrl }}
+            source={getPartyImageSource(party)}
             style={styles.eventImage}
             resizeMode="cover"
           />

@@ -10,6 +10,13 @@ interface PartyCardProps {
   onPress: () => void;
 }
 
+const getPartyImageSource = (party: Party) => {
+  if (party.venueName.toUpperCase() === 'MACCÄO OPEN AIR CLUB') {
+    return require('../../assets/Maccao.jpeg'); 
+  }
+  return { uri: party.imageUrl };
+};
+
 export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
   const isSoldOut = !party.isAvailable;
   const hasFewLeft = party.fewLeft && !isSoldOut;
@@ -21,7 +28,7 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
     >
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: party.imageUrl }}
+          source={getPartyImageSource(party)}
           style={styles.image}
         />
         
@@ -53,9 +60,13 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
           <Text style={styles.infoText}>{party.startTime}</Text>
         </View>
         
-        <View style={styles.priceContainer}>
+        <View style={[
+          styles.priceContainer,
+          isSoldOut ? styles.soldOutPriceContainer : {},
+          hasFewLeft ? styles.fewLeftPriceContainer : {},
+        ]}>
           <Text style={styles.price}>
-            {party.price > 0 ? `${party.price}€` : 'GRATIS'}
+            {isSoldOut ? 'Agotado' : (party.price > 0 ? `${party.price}€` : 'GRATIS')}
           </Text>
         </View>
       </View>
@@ -143,6 +154,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
+  },
+  soldOutPriceContainer: {
+    backgroundColor: '#ef4444',
+  },
+  fewLeftPriceContainer: {
+    backgroundColor: '#f59e0b',
   },
   price: {
     color: '#fff',
