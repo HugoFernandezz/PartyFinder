@@ -17,7 +17,7 @@ import { apiService } from '../services/api';
 import { RootStackParamList } from '../components/Navigation';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'HomeMain'>;
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
@@ -240,7 +240,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <SectionList
         sections={partySections}
         renderItem={renderPartyCard}
@@ -250,6 +250,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        style={styles.sectionList}
         stickySectionHeadersEnabled={true}
         bounces={false}
         overScrollMode="never"
@@ -261,7 +262,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
@@ -293,6 +294,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
+    flexGrow: 1,
   },
   sectionHeader: {
     backgroundColor: '#ffffff',
@@ -393,5 +395,12 @@ const styles = StyleSheet.create({
   fullDate: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  sectionList: {
+    backgroundColor: '#ffffff',
   },
 }); 

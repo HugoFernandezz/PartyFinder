@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Party, TicketType } from '../types';
+import { TicketCard } from '../components/TicketCard';
 
 const { width } = Dimensions.get('window');
 
@@ -41,12 +42,6 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
     const urlToOpen = party.ticketUrl || party.ticketTypes?.find(t => t.isAvailable && t.purchaseUrl)?.purchaseUrl;
     if (urlToOpen) {
       Linking.openURL(urlToOpen);
-    }
-  };
-
-  const handleBuyTicketType = (ticket: TicketType) => {
-    if (ticket.purchaseUrl) {
-      Linking.openURL(ticket.purchaseUrl);
     }
   };
 
@@ -159,7 +154,11 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
               <Ionicons name="information-circle-outline" size={24} color="#6366f1" />
               <Text style={styles.sectionTitle}>Descripción</Text>
             </View>
-            <Text style={styles.descriptionText}>{party.description}</Text>
+            {party.description.split('\n').map((text, index) => (
+              <Text key={index} style={styles.descriptionText}>
+                {text}
+              </Text>
+            ))}
           </View>
 
           {/* Información de transporte para eventos de bus */}
@@ -216,111 +215,9 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
                 <Text style={styles.sectionTitle}>Tipos de Entrada</Text>
               </View>
               <View style={styles.ticketTypesContainer}>
-                {party.ticketTypes.map((ticket, index) => {
-                  const isAvailable = ticket.isAvailable && !ticket.isSoldOut;
-                  const hasFewLeft = ticket.fewLeft && isAvailable;
-                  const isClickable = isAvailable && !!ticket.purchaseUrl;
-                  
-                  return (
-                    <TouchableOpacity 
-                      key={ticket.id} 
-                      style={[
-                        styles.ticketTypeCard,
-                        hasFewLeft && styles.ticketTypeCardFewLeft,
-                        !isAvailable && styles.ticketTypeCardSoldOut
-                      ]}
-                      onPress={() => isClickable && handleBuyTicketType(ticket)}
-                      disabled={!isClickable}
-                      activeOpacity={isClickable ? 0.7 : 1}
-                    >
-                      <View style={styles.ticketTypeContent}>
-                        <View style={styles.ticketTypeHeader}>
-                          <View style={styles.ticketTypeInfo}>
-                            <Text style={[
-                              styles.ticketTypeName,
-                              !isAvailable && styles.ticketTypeNameDisabled
-                            ]}>
-                              {ticket.name}
-                            </Text>
-                            
-                            {/* Badges */}
-                            <View style={styles.badgesContainer}>
-                              {ticket.isPromotion && (
-                                <View style={styles.promotionBadge}>
-                                  <Ionicons name="flash" size={12} color="#d97706" />
-                                  <Text style={styles.promotionText}>PROMOCIÓN</Text>
-                                </View>
-                              )}
-                              {ticket.isVip && (
-                                <View style={styles.vipBadge}>
-                                  <Ionicons name="star" size={12} color="#7c3aed" />
-                                  <Text style={styles.vipText}>VIP</Text>
-                                </View>
-                              )}
-                              {hasFewLeft && (
-                                <View style={styles.fewLeftBadge}>
-                                  <Ionicons name="warning" size={12} color="#d97706" />
-                                  <Text style={styles.fewLeftText}>¡ÚLTIMAS!</Text>
-                                </View>
-                              )}
-                            </View>
-                          </View>
-                          
-                          <View style={styles.priceSection}>
-                            <Text style={[
-                              styles.ticketTypePrice,
-                              !isAvailable && styles.ticketTypePriceDisabled
-                            ]}>
-                              {ticket.price}€
-                            </Text>
-                          </View>
-                        </View>
-                        
-                        {ticket.description && (
-                          <Text style={[
-                            styles.ticketTypeDescription,
-                            !isAvailable && styles.ticketTypeDescriptionDisabled
-                          ]}>
-                            {ticket.description}
-                          </Text>
-                        )}
-                        
-                        {ticket.restrictions && (
-                          <Text style={styles.ticketTypeRestrictions}>
-                            <Ionicons name="information-circle" size={12} color="#f59e0b" />
-                            {' '}{ticket.restrictions}
-                          </Text>
-                        )}
-                      </View>
-                      
-                      {/* Área de acción */}
-                      <View style={[
-                        styles.ticketActionContainer,
-                        hasFewLeft && styles.ticketActionContainerFewLeft,
-                        !isAvailable && styles.ticketActionContainerSoldOut
-                      ]}>
-                        {isAvailable ? (
-                          <>
-                            <Ionicons 
-                              name={hasFewLeft ? "flash" : "card"} 
-                              size={20} 
-                              color="#fff" 
-                            />
-                            <Text style={styles.ticketActionText}>
-                              {hasFewLeft ? "¡Comprar Ahora!" : "Comprar Entrada"}
-                            </Text>
-                            <Ionicons name="chevron-forward" size={20} color="#fff" />
-                          </>
-                        ) : (
-                          <View style={styles.soldOutActionContent}>
-                            <Ionicons name="close-circle" size={20} color="#94a3b8" />
-                            <Text style={styles.ticketActionTextDisabled}>Agotado</Text>
-                          </View>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
+                {party.ticketTypes.map((ticket) => (
+                  <TicketCard key={ticket.id} ticket={ticket} />
+                ))}
               </View>
             </View>
           )}
