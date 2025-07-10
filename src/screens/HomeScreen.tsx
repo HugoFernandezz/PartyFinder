@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  SectionList,
   RefreshControl,
   TextInput,
   Alert,
@@ -25,9 +25,15 @@ interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
 }
 
+interface SectionData {
+  title: string;
+  data: Party[];
+}
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [parties, setParties] = useState<Party[]>([]);
-  const [filteredParties, setFilteredParties] = useState<Party[]>([]);
+  // El estado ahora será para las secciones
+  const [partySections, setPartySections] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +45,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    filterParties();
+    // La función que procesa ahora se llamará desde un useMemo
+    const processedParties = processParties();
+    setPartySections(processedParties);
   }, [searchQuery, parties, selectedTags]);
 
   useEffect(() => {
@@ -86,17 +94,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const filterParties = () => {
+  const processParties = (): SectionData[] => {
     let filtered = parties;
 
-    // Filtrar por etiquetas seleccionadas
+    // 1. Filtrar por etiquetas seleccionadas
     if (selectedTags.length > 0) {
       filtered = filtered.filter(party =>
         party.tags.some(tag => selectedTags.includes(tag))
       );
     }
 
-    // Filtrar por búsqueda de texto
+    // 2. Filtrar por búsqueda de texto
     if (searchQuery.trim()) {
       filtered = filtered.filter(party =>
         party.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -106,20 +114,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       );
     }
 
-    // Ordenar por fecha - los más cercanos primero
-    filtered = filtered.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      const now = new Date();
+    // 3. Ordenar por fecha cronológica ascendente
+    filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // 4. Agrupar en secciones por día
+    const sections: { [key: string]: Party[] } = {};
+    filtered.forEach(party => {
+      const partyDate = new Date(party.date);
+      const dayKey = new Date(partyDate.getFullYear(), partyDate.getMonth(), partyDate.getDate()).toISOString();
       
-      // Calcular la diferencia absoluta con la fecha actual
-      const diffA = Math.abs(dateA.getTime() - now.getTime());
-      const diffB = Math.abs(dateB.getTime() - now.getTime());
-      
-      return diffA - diffB;
+      if (!sections[dayKey]) {
+        sections[dayKey] = [];
+      }
+      sections[dayKey].push(party);
     });
 
-    setFilteredParties(filtered);
+    // 5. Formatear para SectionList
+    const locale = 'es-ES';
+    const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+    return Object.keys(sections).map(dateKey => ({
+      title: new Date(dateKey).toLocaleDateString(locale, options),
+      data: sections[dateKey],
+    }));
   };
 
   const handleTagToggle = (tag: string) => {
@@ -141,6 +158,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       party={item} 
       onPress={() => handlePartyPress(item)}
     />
+  );
+
+  const renderSectionHeader = ({ section: { title } }: { section: SectionData }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{title}</Text>
+    </View>
   );
 
   const renderHeader = () => (
@@ -210,10 +233,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={filteredParties}
+      <SectionList
+        sections={partySections}
         renderItem={renderPartyCard}
         keyExtractor={(item) => item.id}
+        renderSectionHeader={renderSectionHeader}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
@@ -226,6 +250,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        stickySectionHeadersEnabled={true}
       />
     </SafeAreaView>
   );
@@ -298,6 +323,21 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
+  },
+  sectionHeader: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  sectionHeaderText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#475569',
+    textTransform: 'capitalize',
   },
   emptyState: {
     flex: 1,
