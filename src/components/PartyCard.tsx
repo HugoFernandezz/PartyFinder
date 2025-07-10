@@ -20,6 +20,7 @@ const getPartyImageSource = (party: Party) => {
 export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
   const isSoldOut = !party.isAvailable;
   const hasFewLeft = party.fewLeft && !isSoldOut;
+  const isBusEvent = party.title.toUpperCase().includes('BUS');
 
   return (
     <TouchableOpacity 
@@ -32,6 +33,14 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
           style={styles.image}
         />
         
+        {/* Indicador de evento de bus */}
+        {isBusEvent && (
+          <View style={styles.busIndicator}>
+            <Ionicons name="bus" size={24} color="#fff" />
+            <Text style={styles.busText}>TRANSPORTE</Text>
+          </View>
+        )}
+        
         {isSoldOut && (
           <View style={styles.soldOutOverlay}>
             <Ionicons name="eye-off-outline" size={28} color="rgba(255, 255, 255, 0.8)" />
@@ -39,7 +48,7 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
           </View>
         )}
         
-        {hasFewLeft && (
+        {hasFewLeft && !isBusEvent && (
           <View style={styles.fewLeftBadge}>
             <Ionicons name="warning" size={18} color="#fff" />
           </View>
@@ -165,5 +174,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  busIndicator: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#f59e0b',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  busText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 5,
   },
 }); 

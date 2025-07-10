@@ -33,6 +33,8 @@ const getPartyImageSource = (party: Party) => {
 
 export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, navigation }) => {
   const { party } = route.params;
+  
+  const isBusEvent = party.title.toUpperCase().includes('BUS');
 
   const handleBuyTickets = () => {
     // Si la URL principal no existe, intentar abrir la del primer ticket disponible
@@ -159,6 +161,23 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
             </View>
             <Text style={styles.descriptionText}>{party.description}</Text>
           </View>
+
+          {/* Información de transporte para eventos de bus */}
+          {isBusEvent && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="bus-outline" size={24} color="#f59e0b" />
+                <Text style={styles.sectionTitle}>Información de Transporte</Text>
+              </View>
+              <View style={styles.busInfoContainer}>
+                <Ionicons name="alert-circle-outline" size={20} color="#f59e0b" />
+                <Text style={styles.busInfoText}>
+                  Esta es una reserva de <Text style={styles.busInfoBold}>transporte al evento</Text>. 
+                  No incluye la entrada al evento, solo el viaje en autobús.
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Ubicación */}
           <View style={styles.section}>
@@ -626,5 +645,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  busInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fef3c7',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  busInfoText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#d97706',
+    lineHeight: 20,
+    marginLeft: 12,
+  },
+  busInfoBold: {
+    fontWeight: 'bold',
   },
 }); 

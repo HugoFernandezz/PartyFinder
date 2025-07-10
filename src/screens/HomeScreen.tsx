@@ -145,11 +145,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     />
   );
 
-  const renderSectionHeader = ({ section: { title } }: { section: SectionData }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{title}</Text>
-    </View>
-  );
+  const renderSectionHeader = ({ section: { title } }: { section: SectionData }) => {
+    // Separar el día de la semana del resto de la fecha
+    const parts = title.split(', ');
+    const dayOfWeek = parts[0];
+    const fullDate = parts.slice(1).join(', ');
+    
+    return (
+      <View style={styles.sectionHeader}>
+        <View style={styles.dateContainer}>
+          <Ionicons name="calendar" size={22} color="#6366f1" style={styles.dateIcon} />
+          <View style={styles.dateTextContainer}>
+            <Text style={styles.dayOfWeek}>{dayOfWeek}</Text>
+            <Text style={styles.fullDate}>{fullDate}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   const renderHeader = () => (
     <View>
@@ -238,6 +251,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         stickySectionHeadersEnabled={true}
+        bounces={false}
+        overScrollMode="never"
       />
     </SafeAreaView>
   );
@@ -280,18 +295,23 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sectionHeader: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: '#e5e7eb',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionHeaderText: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#475569',
+    color: '#1f2937',
     textTransform: 'capitalize',
   },
   emptyState: {
@@ -354,5 +374,24 @@ const styles = StyleSheet.create({
   venueButtonTextSelected: {
     color: '#fff',
     fontWeight: '600',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateIcon: {
+    marginRight: 10,
+  },
+  dateTextContainer: {
+    marginLeft: 10,
+  },
+  dayOfWeek: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  fullDate: {
+    fontSize: 14,
+    color: '#6b7280',
   },
 }); 
