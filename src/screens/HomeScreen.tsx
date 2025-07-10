@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   SectionList,
-  RefreshControl,
   TextInput,
   Alert,
   ActivityIndicator,
@@ -12,8 +11,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { PartyCard } from '../components/PartyCard';
-import { ConnectionStatus } from '../components/ConnectionStatus';
-import { TagFilter } from '../components/TagFilter';
 import { Party } from '../types';
 import { apiService } from '../services/api';
 import { RootStackParamList } from '../components/Navigation';
@@ -35,52 +32,51 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // El estado ahora será para las secciones
   const [partySections, setPartySections] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>(['Fiestas']); // Por defecto solo "Fiestas"
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   useEffect(() => {
     loadParties();
+    
+    // Timer para verificar nuevos datos automáticamente cada hora
+    const backgroundUpdateInterval = setInterval(async () => {
+      try {
+        console.log('🔄 Verificando nuevos datos en segundo plano...');
+        const response = await apiService.getCompleteData();
+        if (response.success && response.data.parties.length > 0) {
+          // Solo actualizar si hay cambios en los datos
+          if (JSON.stringify(response.data.parties) !== JSON.stringify(parties)) {
+            console.log('✅ Nuevos datos encontrados, actualizando...');
+            setParties(response.data.parties);
+          }
+        }
+      } catch (error) {
+        console.log('⚠️ Error en actualización automática:', error);
+      }
+    }, 3600000); // Cada hora
+
+    return () => clearInterval(backgroundUpdateInterval);
   }, []);
 
   useEffect(() => {
     // La función que procesa ahora se llamará desde un useMemo
     const processedParties = processParties();
     setPartySections(processedParties);
-  }, [searchQuery, parties, selectedTags]);
-
-  useEffect(() => {
-    // Extraer todas las etiquetas únicas de los eventos
-    const allTags = new Set<string>();
-    parties.forEach(party => {
-      party.tags.forEach(tag => allTags.add(tag));
-    });
-    
-    // Ordenar tags con "Fiestas" primero
-    const sortedTags = Array.from(allTags).sort((a, b) => {
-      if (a.toLowerCase() === 'fiestas') return -1;
-      if (b.toLowerCase() === 'fiestas') return 1;
-      return a.localeCompare(b);
-    });
-    
-    setAvailableTags(sortedTags);
-  }, [parties]);
+  }, [searchQuery, parties]);
 
   const loadParties = async () => {
     try {
       setLoading(true);
       
       const response = await apiService.getCompleteData();
+      
       if (response.success) {
         setParties(response.data.parties);
       } else {
-        Alert.alert('Error', response.error || 'Error al cargar las fiestas');
+        // Si no hay datos disponibles aún, mantener lista vacía sin mostrar error
         setParties([]);
       }
       
     } catch (error) {
-      Alert.alert('Error', 'Error al conectar con el servidor');
       console.error('Error loading parties:', error);
       setParties([]);
     } finally {
@@ -88,23 +84,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadParties();
-    setRefreshing(false);
-  };
-
   const processParties = (): SectionData[] => {
     let filtered = parties;
 
-    // 1. Filtrar por etiquetas seleccionadas
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(party =>
-        party.tags.some(tag => selectedTags.includes(tag))
-      );
-    }
-
-    // 2. Filtrar por búsqueda de texto
+    // Filtrar por búsqueda de texto
     if (searchQuery.trim()) {
       filtered = filtered.filter(party =>
         party.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -114,10 +97,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       );
     }
 
-    // 3. Ordenar por fecha cronológica ascendente
+    // Ordenar por fecha cronológica ascendente
     filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // 4. Agrupar en secciones por día
+    // Agrupar en secciones por día
     const sections: { [key: string]: Party[] } = {};
     filtered.forEach(party => {
       const partyDate = new Date(party.date);
@@ -129,7 +112,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       sections[dayKey].push(party);
     });
 
-    // 5. Formatear para SectionList
+    // Formatear para SectionList
     const locale = 'es-ES';
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
@@ -137,16 +120,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: new Date(dateKey).toLocaleDateString(locale, options),
       data: sections[dateKey],
     }));
-  };
-
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => {
-      if (prev.includes(tag)) {
-        return prev.filter(t => t !== tag);
-      } else {
-        return [...prev, tag];
-      }
-    });
   };
 
   const handlePartyPress = (party: Party) => {
@@ -173,7 +146,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <Text style={styles.subtitle}>
           Descubre las mejores fiestas de esta noche
         </Text>
-        <ConnectionStatus />
+        
+        {/* Removed update info banner */}
         
         <View style={styles.searchContainer}>
           <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
@@ -197,26 +171,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       </View>
       
       {/* Filtros de etiquetas */}
-      <TagFilter
-        availableTags={availableTags}
-        selectedTags={selectedTags}
-        onTagToggle={handleTagToggle}
-      />
+      {/* Removed TagFilter component */}
     </View>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="calendar-outline" size={64} color="#ccc" />
-      <Text style={styles.emptyTitle}>No hay fiestas disponibles</Text>
-      <Text style={styles.emptySubtitle}>
-        {searchQuery 
-          ? 'Intenta con otros terminos de busqueda'
-          : selectedTags.length > 0
-          ? 'No hay eventos para las categorias seleccionadas'
-          : 'Vuelve mas tarde para ver nuevos eventos'
-        }
-      </Text>
+      <Ionicons 
+        name="calendar-outline" 
+        size={64} 
+        color="#ccc" 
+      />
+      {searchQuery ? (
+        <>
+          <Text style={styles.emptyTitle}>No se encontraron fiestas</Text>
+          <Text style={styles.emptySubtitle}>
+            Intenta con otros términos de búsqueda
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={styles.emptyTitle}>No hay fiestas disponibles</Text>
+          <Text style={styles.emptySubtitle}>
+            Vuelve más tarde para ver nuevos eventos
+          </Text>
+        </>
+      )}
     </View>
   );
 
@@ -240,14 +220,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         renderSectionHeader={renderSectionHeader}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyState}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#6366f1']}
-            tintColor="#6366f1"
-          />
-        }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         stickySectionHeadersEnabled={true}
@@ -287,20 +259,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
     marginBottom: 20,
-  },
-  mockDataBanner: {
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-  },
-  mockDataText: {
-    fontSize: 14,
-    color: '#92400e',
-    fontWeight: '500',
   },
   searchContainer: {
     flexDirection: 'row',

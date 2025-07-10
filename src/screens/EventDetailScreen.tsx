@@ -62,6 +62,38 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
     return time;
   };
 
+  const getPriceDisplay = () => {
+    // Si el precio principal es válido, usarlo
+    if (party.price !== null && party.price !== undefined && 
+        !isNaN(party.price) && isFinite(party.price)) {
+      return party.price === 0 ? 'GRATIS' : `${party.price}€`;
+    }
+
+    // Si no hay tipos de entrada, mostrar que no hay info
+    if (!party.ticketTypes || party.ticketTypes.length === 0) {
+      return 'Sin información';
+    }
+
+    // Buscar entradas disponibles
+    const availableTickets = party.ticketTypes.filter(ticket => 
+      ticket.isAvailable && !ticket.isSoldOut
+    );
+
+    if (availableTickets.length === 0) {
+      return 'Agotado';
+    }
+
+    // Obtener el precio más bajo de las entradas disponibles
+    const minPrice = Math.min(...availableTickets.map(ticket => ticket.price));
+    const maxPrice = Math.max(...availableTickets.map(ticket => ticket.price));
+
+    if (minPrice === maxPrice) {
+      return minPrice === 0 ? 'GRATIS' : `${minPrice}€`;
+    } else {
+      return `Desde ${minPrice}€`;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -115,7 +147,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
               <Text style={styles.sectionTitle}>Precio</Text>
             </View>
             <Text style={styles.priceText}>
-              {party.price === 0 ? 'GRATIS' : `${party.price}€`}
+              {getPriceDisplay()}
             </Text>
           </View>
 
