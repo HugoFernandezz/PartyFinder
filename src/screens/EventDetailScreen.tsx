@@ -166,59 +166,106 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
               </View>
               <View style={styles.ticketTypesContainer}>
                 {party.ticketTypes.map((ticket, index) => {
-                  const isClickable = ticket.isAvailable && !!ticket.purchaseUrl;
+                  const isAvailable = ticket.isAvailable && !ticket.isSoldOut;
+                  const hasFewLeft = ticket.fewLeft && isAvailable;
+                  const isClickable = isAvailable && !!ticket.purchaseUrl;
+                  
                   return (
                     <TouchableOpacity 
                       key={ticket.id} 
                       style={[
                         styles.ticketTypeCard,
-                        !isClickable && styles.ticketTypeCardDisabled
+                        hasFewLeft && styles.ticketTypeCardFewLeft,
+                        !isAvailable && styles.ticketTypeCardSoldOut
                       ]}
                       onPress={() => isClickable && handleBuyTicketType(ticket)}
                       disabled={!isClickable}
+                      activeOpacity={isClickable ? 0.7 : 1}
                     >
-                      <View style={styles.ticketTypeHeader}>
-                        <View style={styles.ticketTypeInfo}>
-                          <Text style={styles.ticketTypeName}>{ticket.name}</Text>
-                          {ticket.fewLeft && !ticket.isSoldOut && (
-                            <View style={styles.fewLeftBadge}>
-                              <Text style={styles.fewLeftText}>¡ÚLTIMAS ENTRADAS!</Text>
+                      <View style={styles.ticketTypeContent}>
+                        <View style={styles.ticketTypeHeader}>
+                          <View style={styles.ticketTypeInfo}>
+                            <Text style={[
+                              styles.ticketTypeName,
+                              !isAvailable && styles.ticketTypeNameDisabled
+                            ]}>
+                              {ticket.name}
+                            </Text>
+                            
+                            {/* Badges */}
+                            <View style={styles.badgesContainer}>
+                              {ticket.isPromotion && (
+                                <View style={styles.promotionBadge}>
+                                  <Ionicons name="flash" size={12} color="#d97706" />
+                                  <Text style={styles.promotionText}>PROMOCIÓN</Text>
+                                </View>
+                              )}
+                              {ticket.isVip && (
+                                <View style={styles.vipBadge}>
+                                  <Ionicons name="star" size={12} color="#7c3aed" />
+                                  <Text style={styles.vipText}>VIP</Text>
+                                </View>
+                              )}
+                              {hasFewLeft && (
+                                <View style={styles.fewLeftBadge}>
+                                  <Ionicons name="warning" size={12} color="#d97706" />
+                                  <Text style={styles.fewLeftText}>¡ÚLTIMAS!</Text>
+                                </View>
+                              )}
                             </View>
-                          )}
-                          {ticket.isPromotion && (
-                            <View style={styles.promotionBadge}>
-                              <Text style={styles.promotionText}>PROMOCIÓN</Text>
-                            </View>
-                          )}
-                          {ticket.isVip && (
-                            <View style={styles.vipBadge}>
-                              <Text style={styles.vipText}>VIP</Text>
-                            </View>
-                          )}
+                          </View>
+                          
+                          <View style={styles.priceSection}>
+                            <Text style={[
+                              styles.ticketTypePrice,
+                              !isAvailable && styles.ticketTypePriceDisabled
+                            ]}>
+                              {ticket.price}€
+                            </Text>
+                          </View>
                         </View>
-                        <Text style={styles.ticketTypePrice}>{ticket.price}€</Text>
+                        
+                        {ticket.description && (
+                          <Text style={[
+                            styles.ticketTypeDescription,
+                            !isAvailable && styles.ticketTypeDescriptionDisabled
+                          ]}>
+                            {ticket.description}
+                          </Text>
+                        )}
+                        
+                        {ticket.restrictions && (
+                          <Text style={styles.ticketTypeRestrictions}>
+                            <Ionicons name="information-circle" size={12} color="#f59e0b" />
+                            {' '}{ticket.restrictions}
+                          </Text>
+                        )}
                       </View>
                       
-                      {ticket.description && (
-                        <Text style={styles.ticketTypeDescription}>{ticket.description}</Text>
-                      )}
-                      
-                      {ticket.restrictions && (
-                        <Text style={styles.ticketTypeRestrictions}>⚠️ {ticket.restrictions}</Text>
-                      )}
-                      
-                      <View style={styles.ticketTypeFooter}>
-                        <View style={[
-                          styles.availabilityBadge,
-                          { backgroundColor: ticket.isAvailable ? '#dcfce7' : '#fee2e2' }
-                        ]}>
-                          <Text style={[
-                            styles.availabilityBadgeText,
-                            { color: ticket.isAvailable ? '#16a34a' : '#dc2626' }
-                          ]}>
-                            {ticket.isAvailable ? 'Disponible' : 'Agotado'}
-                          </Text>
-                        </View>
+                      {/* Área de acción */}
+                      <View style={[
+                        styles.ticketActionContainer,
+                        hasFewLeft && styles.ticketActionContainerFewLeft,
+                        !isAvailable && styles.ticketActionContainerSoldOut
+                      ]}>
+                        {isAvailable ? (
+                          <>
+                            <Ionicons 
+                              name={hasFewLeft ? "flash" : "card"} 
+                              size={20} 
+                              color="#fff" 
+                            />
+                            <Text style={styles.ticketActionText}>
+                              {hasFewLeft ? "¡Comprar Ahora!" : "Comprar Entrada"}
+                            </Text>
+                            <Ionicons name="chevron-forward" size={20} color="#fff" />
+                          </>
+                        ) : (
+                          <View style={styles.soldOutActionContent}>
+                            <Ionicons name="close-circle" size={20} color="#94a3b8" />
+                            <Text style={styles.ticketActionTextDisabled}>Agotado</Text>
+                          </View>
+                        )}
                       </View>
                     </TouchableOpacity>
                   );
@@ -227,56 +274,8 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
             </View>
           )}
 
-          {/* Disponibilidad */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="people-outline" size={24} color="#6366f1" />
-              <Text style={styles.sectionTitle}>Disponibilidad</Text>
-            </View>
-            <View style={styles.availabilityContainer}>
-              <Text style={styles.availabilityText}>
-                {party.soldTickets} / {party.capacity} entradas vendidas
-              </Text>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${(party.soldTickets / party.capacity) * 100}%` }
-                  ]} 
-                />
-              </View>
-              <Text style={[
-                styles.statusText,
-                { color: party.isAvailable ? '#10b981' : '#ef4444' }
-              ]}>
-                {party.isAvailable ? 'Entradas disponibles' : 'Agotado'}
-              </Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
-
-      {/* Botón de compra fijo */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity 
-          style={[
-            styles.buyButton,
-            (!party.isAvailable || !party.ticketUrl) && styles.buyButtonDisabled
-          ]}
-          onPress={handleBuyTickets}
-          disabled={!party.isAvailable || !party.ticketUrl}
-        >
-          <Ionicons 
-            name="ticket-outline" 
-            size={24} 
-            color="#fff" 
-            style={styles.buyButtonIcon}
-          />
-          <Text style={styles.buyButtonText}>
-            {party.isAvailable ? 'Comprar Entradas' : 'Agotado'}
-          </Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -434,53 +433,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  bottomContainer: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  buyButton: {
-    backgroundColor: '#6366f1',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  buyButtonDisabled: {
-    backgroundColor: '#9ca3af',
-  },
-  buyButtonIcon: {
-    marginRight: 8,
-  },
-  buyButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-  },
   // Estilos para tipos de entrada
   ticketTypesContainer: {
-    gap: 12,
+    gap: 16,
   },
   ticketTypeCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    overflow: 'hidden',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  ticketTypeCardDisabled: {
-    backgroundColor: '#f9fafb',
-    borderColor: '#e5e7eb',
+  ticketTypeCardSoldOut: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#d1d5db',
+    shadowColor: 'transparent',
+    elevation: 0,
+  },
+  ticketTypeCardFewLeft: {
+    borderColor: '#f59e0b',
+    borderWidth: 1,
+  },
+  ticketTypeContent: {
+    padding: 16,
   },
   ticketTypeHeader: {
     flexDirection: 'row',
@@ -492,14 +472,26 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  priceSection: {
+    alignItems: 'flex-end',
+  },
   ticketTypeName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 6,
   },
+  ticketTypeNameDisabled: {
+    color: '#94a3b8',
+  },
+  badgesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
   fewLeftBadge: {
-    backgroundColor: '#fffbeb',
+    backgroundColor: '#fef3c7',
     borderColor: '#f59e0b',
     borderWidth: 1,
     paddingHorizontal: 8,
@@ -507,6 +499,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 4,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   fewLeftText: {
     fontSize: 10,
@@ -514,9 +509,12 @@ const styles = StyleSheet.create({
     color: '#d97706',
   },
   ticketTypePrice: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#6366f1',
+  },
+  ticketTypePriceDisabled: {
+    color: '#94a3b8',
   },
   promotionBadge: {
     backgroundColor: '#fef3c7',
@@ -525,6 +523,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 4,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   promotionText: {
     fontSize: 10,
@@ -538,6 +539,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 4,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   vipText: {
     fontSize: 10,
@@ -547,26 +551,48 @@ const styles = StyleSheet.create({
   ticketTypeDescription: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 8,
+    marginBottom: 12,
     lineHeight: 20,
+  },
+  ticketTypeDescriptionDisabled: {
+    color: '#94a3b8',
   },
   ticketTypeRestrictions: {
     fontSize: 12,
     color: '#f59e0b',
-    marginBottom: 8,
+    marginBottom: 12,
     fontStyle: 'italic',
   },
-  ticketTypeFooter: {
+  ticketActionContainer: {
+    backgroundColor: '#6366f1',
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+    marginTop: 16,
+    borderRadius: 12,
   },
-  availabilityBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
+  ticketActionContainerFewLeft: {
+    backgroundColor: '#f59e0b',
   },
-  availabilityBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
+  ticketActionContainerSoldOut: {
+    backgroundColor: '#e2e8f0',
+  },
+  ticketActionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  ticketActionTextDisabled: {
+    color: '#94a3b8',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  soldOutActionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 }); 
