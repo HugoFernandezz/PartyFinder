@@ -22,13 +22,13 @@ import {
 
 // Configuración de Firebase - REEMPLAZAR CON TUS VALORES
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "tu-proyecto.firebaseapp.com",
-  projectId: "tu-proyecto",
-  storageBucket: "tu-proyecto.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
-};
+    apiKey: "AIzaSyACNEPsAldntktsfyR6uXNPzY3bwZcfjgU",
+    authDomain: "partyfinder-murcia.firebaseapp.com",
+    projectId: "partyfinder-murcia",
+    storageBucket: "partyfinder-murcia.firebasestorage.app",
+    messagingSenderId: "711278175802",
+    appId: "1:711278175802:web:f0e041c143d2816af5b703"
+  };
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);

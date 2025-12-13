@@ -229,9 +229,26 @@ def extract_events_from_html(html: str) -> List[Dict]:
 
 
 def get_chromium_path() -> Optional[str]:
-    """Busca el ejecutable de Chromium instalado por Playwright."""
-    if sys.platform == 'win32':
+    """Busca el ejecutable de Chromium según el sistema operativo."""
+    import platform
+    
+    if platform.system() == 'Linux':
+        # Raspberry Pi / Linux - buscar Chromium del sistema
+        linux_paths = [
+            '/usr/bin/chromium-browser',  # Raspberry Pi OS / Debian
+            '/usr/bin/chromium',           # Algunas distros
+            '/usr/bin/google-chrome',      # Chrome instalado
+            '/snap/bin/chromium',          # Snap
+        ]
+        for path in linux_paths:
+            if os.path.exists(path):
+                return path
+                
+    elif platform.system() == 'Windows':
+        # Windows - buscar Playwright Chromium o Chrome
         localappdata = os.environ.get('LOCALAPPDATA', '')
+        
+        # Primero buscar Playwright Chromium
         pw_dir = os.path.join(localappdata, 'ms-playwright')
         if os.path.exists(pw_dir):
             for item in os.listdir(pw_dir):
@@ -239,6 +256,27 @@ def get_chromium_path() -> Optional[str]:
                     potential_path = os.path.join(pw_dir, item, 'chrome-win64', 'chrome.exe')
                     if os.path.exists(potential_path):
                         return potential_path
+        
+        # Luego buscar Chrome del sistema
+        chrome_paths = [
+            os.path.join(localappdata, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+        ]
+        for path in chrome_paths:
+            if os.path.exists(path):
+                return path
+                
+    elif platform.system() == 'Darwin':
+        # macOS
+        mac_paths = [
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        ]
+        for path in mac_paths:
+            if os.path.exists(path):
+                return path
+    
     return None
 
 
@@ -541,32 +579,32 @@ async def scrape_and_save(upload_to_firebase: bool = False):
         upload_to_firebase: Si True, sube los datos a Firebase Firestore
     """
     print("=" * 60)
-    print("🎉 PartyFinder - Scraper de Eventos")
+    print("PartyFinder - Scraper de Eventos")
     print("=" * 60)
     
     # Scrapear eventos
     raw_events = await scrape_all_events()
     
     if not raw_events:
-        print("❌ No se encontraron eventos")
+        print("No se encontraron eventos")
         return []
     
     # Transformar al formato de la app
     transformed_events = transform_to_app_format(raw_events)
     
-    # Guardar datos crudos localmente
+    # Guardar datos crudos
     with open('data/raw_events.json', 'w', encoding='utf-8') as f:
         json.dump(raw_events, f, indent=2, ensure_ascii=False)
-    print(f"💾 Datos crudos guardados en data/raw_events.json")
+    print(f"Datos crudos guardados en data/raw_events.json")
     
-    # Guardar datos transformados localmente
+    # Guardar datos transformados
     with open('data/events.json', 'w', encoding='utf-8') as f:
         json.dump(transformed_events, f, indent=2, ensure_ascii=False)
-    print(f"💾 Datos transformados guardados en data/events.json")
+    print(f"Datos transformados guardados en data/events.json")
     
     # Subir a Firebase si se solicita
     if upload_to_firebase:
-        print("\n☁️  Subiendo datos a Firebase...")
+        print("\nSubiendo datos a Firebase...")
         try:
             from firebase_config import upload_events_to_firestore, delete_old_events
             
@@ -575,13 +613,13 @@ async def scrape_and_save(upload_to_firebase: bool = False):
             
             # Subir nuevos eventos
             if upload_events_to_firestore(transformed_events):
-                print("✅ Datos subidos a Firebase correctamente")
+                print("Datos subidos a Firebase correctamente")
             else:
-                print("⚠️  Error subiendo a Firebase (datos guardados localmente)")
+                print("Error subiendo a Firebase (datos guardados localmente)")
         except ImportError:
-            print("⚠️  Firebase no configurado (firebase_config.py no encontrado)")
+            print("Firebase no configurado (firebase_config.py no encontrado)")
         except Exception as e:
-            print(f"⚠️  Error con Firebase: {e}")
+            print(f"Error con Firebase: {e}")
     
     return transformed_events
 
@@ -605,11 +643,6 @@ def main():
         action='store_true',
         help='Subir datos a Firebase Firestore'
     )
-    parser.add_argument(
-        '--no-local',
-        action='store_true',
-        help='No guardar archivos locales (solo Firebase)'
-    )
     
     args = parser.parse_args()
     
@@ -618,16 +651,13 @@ def main():
     
     try:
         events = asyncio.run(scrape_and_save(upload_to_firebase=args.firebase))
-        
         if events:
-            print(f"\n✅ Scraping completado: {len(events)} eventos")
-        
+            print(f"\nScraping completado: {len(events)} eventos")
         return events
     except KeyboardInterrupt:
-        print("\n⚠️ Cancelado por el usuario")
+        print("\nCancelado por el usuario")
         return []
 
 
 if __name__ == "__main__":
     main()
-

@@ -2,9 +2,8 @@ name: Scrape Events
 
 on:
   # Ejecutar 3 veces al día: 10:00, 16:00, 22:00 (hora España)
-  # España es UTC+1 en invierno, UTC+2 en verano
   schedule:
-    - cron: '0 9,15,21 * * *'   # UTC -> 10:00, 16:00, 22:00 España (invierno)
+    - cron: '0 9,15,21 * * *'
   
   # Permitir ejecución manual
   workflow_dispatch:
@@ -24,24 +23,29 @@ jobs:
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
       
-      - name: Install dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb chromium-browser
+      
+      - name: Install Python dependencies
         run: |
           cd backend
           pip install -r requirements.txt
       
-      - name: Install Playwright Chromium
-        run: |
-          pip install playwright
-          playwright install chromium
-          playwright install-deps chromium
-      
       - name: Create data directory
         run: mkdir -p backend/data
       
-      - name: Run scraper with Firebase upload
+      - name: Run scraper with virtual display
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DISPLAY: ':99'
         run: |
+          # Iniciar display virtual
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 3
+          
+          # Ejecutar scraper
           cd backend
           python scraper.py --firebase
       
@@ -56,7 +60,7 @@ jobs:
   notify-on-failure:
     runs-on: ubuntu-latest
     needs: scrape
-    if: failure()
+    if: needs.scrape.result == 'failure'
     
     steps:
       - name: Log failure
