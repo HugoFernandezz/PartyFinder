@@ -31,12 +31,18 @@ def get_api_key() -> str:
     return api_key
 
 def fetch_with_scrapingbee(url: str, api_key: str) -> str:
-    """Obtiene el HTML usando ScrapingBee (MÍNIMO créditos: ~5/request)."""
+    """Obtiene el HTML usando ScrapingBee."""
+    from urllib.parse import quote
+    
+    # URL encode la URL target
+    encoded_url = quote(url, safe='')
+    
     params = {
         'api_key': api_key,
-        'url': url,
-        'render_js': 'true',  # ~5 créditos - necesario para Angular
-        # SIN premium_proxy ni stealth_proxy para ahorrar
+        'url': encoded_url,
+        'render_js': 'true',
+        'premium_proxy': 'true',
+        'stealth_proxy': 'true',  # Necesario para Cloudflare
         'block_resources': 'false',
         'wait': '8000',
     }
@@ -49,19 +55,9 @@ def fetch_with_scrapingbee(url: str, api_key: str) -> str:
     
     if response.status_code == 200:
         return response.text
-    elif response.status_code == 500:
-        # Si falla, reintentar CON premium_proxy
-        print(f"   ⚠️ Reintentando con premium_proxy...")
-        params['premium_proxy'] = 'true'
-        response = requests.get(
-            'https://app.scrapingbee.com/api/v1/',
-            params=params,
-            timeout=90
-        )
-        if response.status_code == 200:
-            return response.text
     
-    print(f"   ❌ Error: {response.status_code} - {response.text[:150]}")
+    print(f"   ❌ Error: {response.status_code}")
+    print(f"      {response.text[:200]}")
     return ""
 
 def extract_events_from_html(html: str, venue_id: str, venue_name: str) -> List[Dict]:
