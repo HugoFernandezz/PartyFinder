@@ -11,7 +11,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     
     steps:
       - name: Checkout repository
@@ -24,22 +24,11 @@ jobs:
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
       
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-      
       - name: Install Python dependencies
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install playwright
-      
-      - name: Install Playwright Chromium
-        run: |
-          # nodriver usa internamente Playwright - debemos instalar el navegador
-          playwright install chromium
-          playwright install-deps chromium
+          pip install requests
       
       - name: Create data directory
         run: mkdir -p backend/data
@@ -48,67 +37,35 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          # Verificar que el secret existe
           if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
             echo "ERROR: FIREBASE_SERVICE_ACCOUNT secret no configurado"
-            echo "Ve a Settings > Secrets and variables > Actions > New repository secret"
             exit 1
           fi
-          
-          # Crear archivo de credenciales
           echo "$FIREBASE_SERVICE_ACCOUNT" > backend/serviceAccountKey.json
-          echo "Firebase credentials configuradas correctamente"
+          echo "Firebase credentials OK"
       
-      - name: Run scraper with virtual display
+      - name: Run scraper with ScrapingBee
         env:
-          DISPLAY: ':99'
+          SCRAPINGBEE_API_KEY: ${{ secrets.SCRAPINGBEE_API_KEY }}
         run: |
-          # Iniciar display virtual
-          echo "Iniciando Xvfb..."
-          Xvfb :99 -screen 0 1920x1080x24 &
-          sleep 3
-          
-          # Verificar display
-          echo "Display: $DISPLAY"
-          
-          # Ejecutar scraper CI (usa Playwright directamente, no nodriver)
           cd backend
-          echo "Ejecutando scraper CI..."
-          python -u scraper_ci.py --firebase 2>&1 | tee ../scraper_output.log
+          echo "Ejecutando scraper con ScrapingBee API..."
+          python -u scraper_api.py --firebase 2>&1 | tee ../scraper_output.log
           
-          # Verificar resultado
           if [ -f data/events.json ]; then
             echo "=== SCRAPING EXITOSO ==="
-            echo "Eventos encontrados: $(cat data/events.json | python -c 'import sys,json; print(len(json.load(sys.stdin)))' 2>/dev/null || echo 'Error contando')"
+            echo "Eventos: $(cat data/events.json | python -c 'import sys,json; print(len(json.load(sys.stdin)))' 2>/dev/null || echo '?')"
           else
-            echo "=== SCRAPING FALLÓ - No se generó events.json ==="
+            echo "=== SCRAPING FALLÓ ==="
             exit 1
           fi
       
-      - name: Upload artifacts (backup)
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: scraped-data-${{ github.run_number }}
           path: |
             backend/data/*.json
-            backend/data/*.html
             scraper_output.log
           retention-days: 7
-
-  notify-on-failure:
-    runs-on: ubuntu-latest
-    needs: scrape
-    if: needs.scrape.result == 'failure'
-    
-    steps:
-      - name: Log failure
-        run: |
-          echo "========================================"
-          echo "SCRAPING FAILED at $(date)"
-          echo "========================================"
-          echo "Check the workflow logs for details"
-          echo "Common issues:"
-          echo "  1. FIREBASE_SERVICE_ACCOUNT secret not configured"
-          echo "  2. Cloudflare blocking the scraper"
-          echo "  3. FourVenues website structure changed"
