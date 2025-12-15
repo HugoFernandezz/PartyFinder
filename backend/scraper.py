@@ -256,17 +256,18 @@ def get_chromium_path() -> Optional[str]:
     """
     Busca el ejecutable de Chromium según el sistema operativo.
     
-    IMPORTANTE: Si Playwright está instalado, devuelve None para que 
-    nodriver use automáticamente Playwright's Chromium interno.
+    IMPORTANTE: Si Playwright está instalado o estamos en CI, devuelve None 
+    para que nodriver use automáticamente Playwright's Chromium interno.
     """
     import platform
     
-    # En Linux/CI, primero verificar si Playwright Chromium está instalado
-    # Si lo está, devolver None para que nodriver lo use automáticamente
-    if platform.system() == 'Linux':
-        try:
-            home = os.path.expanduser("~")
-            pw_cache = os.path.join(home, ".cache", "ms-playwright")
+    # En CI (GitHub Actions), SIEMPRE devolver None para usar Playwright
+    # nodriver usará automáticamente su Playwright interno
+    if os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS'):
+        print("   [INFO] Entorno CI detectado, usando Playwright interno de nodriver")
+        return None
+    
+    # En Linux, verificar si Playwright Chromium está instalado
             if os.path.exists(pw_cache):
                 for item in os.listdir(pw_cache):
                     if item.startswith("chromium-"):
