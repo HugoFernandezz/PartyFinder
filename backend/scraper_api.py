@@ -36,23 +36,24 @@ def fetch_with_scrapingbee(url: str, api_key: str) -> str:
     params = {
         'api_key': api_key,
         'url': url,
-        'render_js': 'true',  # Renderizar JavaScript (Angular)
-        'block_resources': 'false',  # NO bloquear recursos
-        'wait': '15000',  # Esperar 15s para Angular
-        'wait_for': '#app',  # Esperar elemento Angular
+        'render_js': 'true',  # Renderizar JavaScript
+        'premium_proxy': 'true',  # Proxy premium para Cloudflare
+        'stealth_proxy': 'true',  # Proxy stealth anti-detección
+        'block_resources': 'false',
+        'wait': '10000',  # Esperar 10s
     }
     
     response = requests.get(
         'https://app.scrapingbee.com/api/v1/',
         params=params,
-        timeout=90
+        timeout=120
     )
     
     if response.status_code == 200:
         return response.text
     else:
         print(f"   ❌ ScrapingBee error: {response.status_code}")
-        print(f"      {response.text[:200]}")
+        print(f"      {response.text[:300]}")
         return ""
 
 def extract_events_from_html(html: str) -> List[Dict]:
