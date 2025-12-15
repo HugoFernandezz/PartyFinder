@@ -1,9 +1,9 @@
 name: Scrape Events
 
 on:
-  # Ejecutar 3 veces al día: 10:00, 16:00, 22:00 (hora España)
+  # Ejecutar 1 vez al día a las 10:00 (hora España) para ahorrar créditos
   schedule:
-    - cron: '0 9,15,21 * * *'
+    - cron: '0 9 * * *'
   
   # Permitir ejecución manual
   workflow_dispatch:
