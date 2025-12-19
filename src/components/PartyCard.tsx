@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
-  Dimensions 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Party } from '../types';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 32;
 
 interface PartyCardProps {
   party: Party;
@@ -20,7 +19,7 @@ interface PartyCardProps {
 
 export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const isSoldOut = !party.isAvailable;
   const hasFewLeft = party.fewLeft && !isSoldOut;
 
@@ -42,8 +41,8 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
   };
 
   return (
-    <TouchableOpacity 
-      style={styles.card} 
+    <TouchableOpacity
+      style={styles.card}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -51,14 +50,14 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
       <View style={styles.imageContainer}>
         <Image
           source={
-            imageError 
+            imageError
               ? require('../../assets/icon.png')
               : { uri: party.imageUrl }
           }
           style={styles.image}
           onError={() => setImageError(true)}
         />
-        
+
         {/* Badge de fecha */}
         <View style={styles.dateBadge}>
           <Text style={styles.dateDay}>{day}</Text>

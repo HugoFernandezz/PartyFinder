@@ -62,10 +62,10 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
   const renderTicket = (ticket: TicketType, index: number) => {
     const isSoldOut = ticket.isSoldOut || !ticket.isAvailable;
     const hasFewLeft = ticket.fewLeft && !isSoldOut;
-    
+
     return (
-      <View 
-        key={ticket.id || index} 
+      <View
+        key={ticket.id || index}
         style={[
           styles.ticketCard,
           isSoldOut && styles.ticketCardSoldOut
@@ -74,16 +74,16 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
         <View style={styles.ticketContent}>
           {/* Nombre y badges */}
           <View style={styles.ticketHeader}>
-            <Text 
+            <Text
               style={[
-                styles.ticketName, 
+                styles.ticketName,
                 isSoldOut && styles.ticketNameSoldOut
-              ]} 
+              ]}
               numberOfLines={2}
             >
               {ticket.name}
             </Text>
-            
+
             {hasFewLeft && (
               <View style={styles.fewLeftBadge}>
                 <Text style={styles.fewLeftText}>Últimas</Text>
@@ -110,7 +110,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
             </View>
 
             {!isSoldOut && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.buyButton,
                   hasFewLeft && styles.buyButtonFewLeft
@@ -129,7 +129,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
@@ -137,16 +137,16 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
         <View style={styles.imageContainer}>
           <Image
             source={
-              imageError 
+              imageError
                 ? require('../../assets/icon.png')
                 : { uri: party.imageUrl }
             }
             style={styles.image}
             onError={() => setImageError(true)}
           />
-          
+
           {/* Botón volver */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -219,7 +219,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
             </View>
 
             {/* Ubicación */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.infoCard}
               onPress={handleOpenMaps}
               activeOpacity={0.7}

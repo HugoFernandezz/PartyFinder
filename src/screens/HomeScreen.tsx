@@ -8,6 +8,8 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Platform,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,14 +31,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<string>('Todas');
   const [availableVenues, setAvailableVenues] = useState<string[]>(['Todas']);
+  const [showUpdateToast, setShowUpdateToast] = useState(false);
+  const fadeAnim = useMemo(() => new Animated.Value(0), []);
+
+  const triggerUpdateToast = useCallback(() => {
+    setShowUpdateToast(true);
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowUpdateToast(false));
+  }, [fadeAnim]);
 
   useEffect(() => {
     loadParties();
-    
+
     // Suscribirse a actualizaciones en tiempo real
     const unsubscribe = apiService.subscribeToUpdates((data) => {
       if (data.parties.length > 0) {
         setParties(data.parties);
+        triggerUpdateToast();
       }
     });
 
@@ -119,10 +141,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     if (isToday) return 'Hoy';
     if (isTomorrow) return 'Mañana';
 
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long' 
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
     };
     return date.toLocaleDateString('es-ES', options);
   };
@@ -139,9 +161,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
       {/* Eventos del día */}
       {item.items.map((party) => (
-        <PartyCard 
-          key={party.id} 
-          party={party} 
+        <PartyCard
+          key={party.id}
+          party={party}
           onPress={() => handlePartyPress(party)}
         />
       ))}
@@ -158,8 +180,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
       {/* Filtro de venues */}
       <View style={styles.filterContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterScroll}
         >
@@ -192,7 +214,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       </View>
       <Text style={styles.emptyTitle}>No hay eventos</Text>
       <Text style={styles.emptySubtitle}>
-        {selectedVenue !== 'Todas' 
+        {selectedVenue !== 'Todas'
           ? `No hay eventos en ${selectedVenue}`
           : 'Vuelve más tarde para ver nuevos eventos'
         }
@@ -232,6 +254,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         }
       />
+
+      {/* Toast de Actualización (Debug Temporal) */}
+      {showUpdateToast && (
+        <Animated.View
+          style={[
+            styles.updateToast,
+            { opacity: fadeAnim }
+          ]}
+        >
+          <Ionicons name="cloud-download-outline" size={20} color="#FFFFFF" />
+          <Text style={styles.updateToastText}>Base de datos actualizada</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 };
@@ -240,7 +275,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
+    ...(Platform.OS === 'web' ? { height: '100vh', overflow: 'hidden' } : {}),
+  } as any,
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -351,5 +387,27 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  updateToast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: '#10B981', // Verde éxito
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    gap: 8,
+  },
+  updateToastText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
