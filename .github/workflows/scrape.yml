@@ -28,11 +28,8 @@ jobs:
           cd backend
           pip install -r requirements.txt
       
-      - name: Install Playwright Chromium
-        run: |
-          pip install playwright
-          playwright install chromium
-          playwright install-deps chromium
+      - name: Install Firecrawl SDK
+        run: pip install firecrawl-py
       
       - name: Create data directory
         run: mkdir -p backend/data
@@ -44,10 +41,12 @@ jobs:
           cd backend
           echo "$FIREBASE_KEY" > serviceAccountKey.json
       
-      - name: Run scraper with Firebase upload
+      - name: Run Firecrawl scraper with Firebase upload
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         run: |
           cd backend
-          python scraper.py --firebase
+          python scraper_firecrawl.py --upload
       
       - name: Upload artifacts (backup)
         uses: actions/upload-artifact@v4
