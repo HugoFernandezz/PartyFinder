@@ -316,15 +316,26 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
             for i, line in enumerate(lines):
                 line = line.strip()
                 
-                # Buscar tickets (formato: "- ENTRADA ..." o "- PROMOCIÓN ...")
-                if line.startswith('- ') and ('ENTRADA' in line.upper() or 'PROMOCIÓN' in line.upper() or 'VIP' in line.upper()):
+                # Buscar tickets (formato: "- ENTRADA(S) ..." o "- PROMOCIÓN ..." o "- VIP")
+                # Incluimos ENTRADAS (plural) y verificamos variaciones comunes
+                is_ticket_line = line.startswith('- ') and any(keyword in line.upper() for keyword in 
+                    ['ENTRADA', 'ENTRADAS', 'PROMOCIÓN', 'PROMOCION', 'VIP', 'RESERVADO', 'LISTA'])
+                
+                if is_ticket_line:
                     if current_ticket:
                         tickets.append(current_ticket)
                     
                     ticket_name = line[2:].strip()  # Quitar "- "
+                    
+                    # Intentar extraer precio inline (ej: "PRIMERAS ENTRADAS 8€")
+                    inline_price = "0"
+                    price_inline_match = re.search(r'(\d+(?:[,.]\d+)?)\s*€', ticket_name)
+                    if price_inline_match:
+                        inline_price = price_inline_match.group(1).replace(',', '.')
+                    
                     current_ticket = {
                         "tipo": ticket_name,
-                        "precio": "0",
+                        "precio": inline_price,
                         "agotadas": False,
                         "descripcion": "",
                         "url_compra": event_url
@@ -348,6 +359,24 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
             # Añadir último ticket
             if current_ticket:
                 tickets.append(current_ticket)
+            
+            # --- DEDUPLICACIÓN DE TICKETS ---
+            # Eliminar duplicados exactos (mismo nombre y precio)
+            unique_tickets = []
+            seen_tickets = set()
+            
+            for t in tickets:
+                # Normalizar nombre para comparación
+                name_clean = re.sub(r'\s+', ' ', t['tipo']).strip().lower()
+                price_clean = str(t['precio']).replace(',', '.')
+                ticket_id = f"{name_clean}|{price_clean}"
+                
+                if ticket_id not in seen_tickets:
+                    seen_tickets.add(ticket_id)
+                    unique_tickets.append(t)
+            
+            tickets = unique_tickets
+            # --------------------------------
             
             # Usar la primera descripción de ticket como descripción general del evento
             if ticket_descriptions:
