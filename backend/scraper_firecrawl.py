@@ -17,10 +17,34 @@ import json
 import os
 import re
 import sys
+import copy
 from datetime import datetime
 from typing import List, Dict, Optional
 from pathlib import Path
 from bs4 import BeautifulSoup
+
+# #region agent log
+# Configuración de logging para debug
+LOG_PATH = Path(__file__).parent.parent / ".cursor" / "debug.log"
+def debug_log(session_id, run_id, hypothesis_id, location, message, data):
+    try:
+        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        log_entry = {
+            "sessionId": session_id,
+            "runId": run_id,
+            "hypothesisId": hypothesis_id,
+            "location": location,
+            "message": message,
+            "data": data,
+            "timestamp": int(datetime.now().timestamp() * 1000)
+        }
+        with open(LOG_PATH, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+            f.flush()  # Forzar escritura inmediata
+    except Exception as e:
+        # Imprimir error para debugging si falla el logging
+        print(f"[DEBUG LOG ERROR] {e}", file=sys.stderr)
+# #endregion
 
 # Intentar importar firecrawl
 try:
@@ -33,7 +57,7 @@ except ImportError:
 # Configuración
 API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 if not API_KEY:
-    print("⚠️ Faltan credenciales: FIRECRAWL_API_KEY")
+    print("WARNING: Faltan credenciales: FIRECRAWL_API_KEY")
     # No fallar inmediatamente, permitir que el script intente otras cosas o falle más adelante si es crítico
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -276,6 +300,19 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
     - Géneros musicales / tags
     - Información del venue (dirección, coordenadas, etc.)
     """
+    # #region agent log
+    session_id = "debug-session"
+    run_id = "run1"
+    debug_log(session_id, run_id, "A", "scraper_firecrawl.py:269", "scrape_event_details START", {
+        "event_name": event.get('name', 'N/A'),
+        "event_url": event.get('url', 'N/A'),
+        "event_code": event.get('code', 'N/A')
+    })
+    # #endregion
+    
+    # Crear una copia profunda del evento para evitar mutaciones del original
+    event = copy.deepcopy(event)
+    
     event_url = event.get('url', '')
     if not event_url:
         return event
@@ -298,6 +335,15 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
         raw_html = getattr(result, 'raw_html', None) or html or ""
         markdown = result.markdown or ""
         
+        # #region agent log
+        debug_log(session_id, run_id, "A", "scraper_firecrawl.py:297", "Markdown recibido", {
+            "markdown_length": len(markdown),
+            "html_length": len(html),
+            "raw_html_length": len(raw_html),
+            "markdown_preview": markdown[:500] if markdown else ""
+        })
+        # #endregion
+        
         if not html and not markdown:
             return event
         
@@ -312,9 +358,30 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
             lines = markdown.split('\n')
             current_ticket = None
             ticket_descriptions = []
+            ticket_start_line = -1  # Línea donde empezó el ticket actual
+            last_ticket_end_line = -1  # Línea donde terminó el último ticket guardado
+            MAX_DISTANCE = 5  # Máxima distancia en líneas para asignar precio/descripción
+            MIN_DISTANCE_FROM_PREVIOUS = 2  # Distancia mínima desde el último ticket guardado
+            
+            # #region agent log
+            debug_log(session_id, run_id, "A", "scraper_firecrawl.py:312", "Iniciando parsing markdown", {
+                "total_lines": len(lines),
+                "lines_preview": lines[:10]
+            })
+            # #endregion
             
             for i, line in enumerate(lines):
                 line = line.strip()
+                
+                # #region agent log
+                debug_log(session_id, run_id, "A", f"scraper_firecrawl.py:316", f"Procesando línea {i}", {
+                    "line_number": i,
+                    "line_content": line,
+                    "current_ticket_before": current_ticket.copy() if current_ticket else None,
+                    "ticket_start_line": ticket_start_line,
+                    "last_ticket_end_line": last_ticket_end_line
+                })
+                # #endregion
                 
                 # Buscar tickets (formato: "- ENTRADA(S) ..." o "- PROMOCIÓN ..." o "- VIP")
                 # Incluimos ENTRADAS (plural) y verificamos variaciones comunes
@@ -323,7 +390,13 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                 
                 if is_ticket_line:
                     if current_ticket:
+                        # #region agent log
+                        debug_log(session_id, run_id, "A", f"scraper_firecrawl.py:325", "Guardando ticket anterior", {
+                            "ticket_guardado": current_ticket.copy()
+                        })
+                        # #endregion
                         tickets.append(current_ticket)
+                        last_ticket_end_line = i - 1  # Marcar dónde terminó el ticket anterior
                     
                     ticket_name = line[2:].strip()  # Quitar "- "
                     
@@ -340,27 +413,114 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                         "descripcion": "",
                         "url_compra": event_url
                     }
+                    ticket_start_line = i  # Marcar dónde empezó este ticket
+                    
+                    # #region agent log
+                    debug_log(session_id, run_id, "A", f"scraper_firecrawl.py:336", "Nuevo ticket creado", {
+                        "ticket_nuevo": current_ticket.copy(),
+                        "precio_inline": inline_price,
+                        "ticket_start_line": ticket_start_line,
+                        "last_ticket_end_line": last_ticket_end_line
+                    })
+                    # #endregion
                 
-                # Detectar precio (formato: "X €") - Solo si no tiene precio inline
+                # Detectar precio (formato: "X €") - Solo si no tiene precio inline Y está cerca del ticket
                 elif current_ticket and re.search(r'^\d+\s*€$', line):
-                    # Solo actualizar si no tiene precio inline válido
-                    if current_ticket['precio'] == "0":
-                        price_match = re.search(r'(\d+)\s*€', line)
-                        if price_match:
-                            current_ticket['precio'] = price_match.group(1)
+                    # Validar proximidad: solo asignar si está cerca del ticket actual
+                    distance_from_current = i - ticket_start_line
+                    # Y no está demasiado cerca del último ticket guardado (evitar asignar al ticket anterior)
+                    distance_from_previous = i - last_ticket_end_line if last_ticket_end_line >= 0 else float('inf')
+                    
+                    if distance_from_current <= MAX_DISTANCE and distance_from_previous >= MIN_DISTANCE_FROM_PREVIOUS:
+                        # Solo actualizar si no tiene precio inline válido
+                        if current_ticket['precio'] == "0":
+                            price_match = re.search(r'(\d+)\s*€', line)
+                            if price_match:
+                                old_price = current_ticket['precio']
+                                current_ticket['precio'] = price_match.group(1)
+                                # #region agent log
+                                debug_log(session_id, run_id, "B", f"scraper_firecrawl.py:345", "Precio asignado desde línea", {
+                                    "line_number": i,
+                                    "line_content": line,
+                                    "ticket_tipo": current_ticket['tipo'],
+                                    "precio_anterior": old_price,
+                                    "precio_nuevo": current_ticket['precio'],
+                                    "distance_from_current": distance_from_current,
+                                    "distance_from_previous": distance_from_previous
+                                })
+                                # #endregion
+                        else:
+                            # #region agent log
+                            debug_log(session_id, run_id, "B", f"scraper_firecrawl.py:345", "Precio IGNORADO (ya tiene precio inline)", {
+                                "line_number": i,
+                                "line_content": line,
+                                "ticket_tipo": current_ticket['tipo'],
+                                "precio_actual": current_ticket['precio']
+                            })
+                            # #endregion
+                    else:
+                        # #region agent log
+                        debug_log(session_id, run_id, "B", f"scraper_firecrawl.py:345", "Precio IGNORADO (validación de proximidad falló)", {
+                            "line_number": i,
+                            "line_content": line,
+                            "ticket_tipo": current_ticket['tipo'],
+                            "distance_from_current": distance_from_current,
+                            "distance_from_previous": distance_from_previous,
+                            "max_distance": MAX_DISTANCE,
+                            "min_distance_from_previous": MIN_DISTANCE_FROM_PREVIOUS
+                        })
+                        # #endregion
                 
-                # Detectar si está agotada
+                # Detectar si está agotada - solo si está cerca del ticket
                 elif current_ticket and 'agotad' in line.lower():
-                    current_ticket['agotadas'] = True
+                    distance_from_current = i - ticket_start_line
+                    distance_from_previous = i - last_ticket_end_line if last_ticket_end_line >= 0 else float('inf')
+                    
+                    if distance_from_current <= MAX_DISTANCE and distance_from_previous >= MIN_DISTANCE_FROM_PREVIOUS:
+                        current_ticket['agotadas'] = True
+                        # #region agent log
+                        debug_log(session_id, run_id, "C", f"scraper_firecrawl.py:353", "Estado agotado asignado", {
+                            "line_number": i,
+                            "line_content": line,
+                            "ticket_tipo": current_ticket['tipo'],
+                            "distance_from_current": distance_from_current,
+                            "distance_from_previous": distance_from_previous
+                        })
+                        # #endregion
                 
-                # Capturar descripción del ticket (texto con info de consumición)
+                # Capturar descripción del ticket (texto con info de consumición) - solo si está cerca
                 elif current_ticket and ('copa' in line.lower() or 'consumir' in line.lower() or 'alcohol' in line.lower()):
-                    current_ticket['descripcion'] = line
-                    ticket_descriptions.append(line)
+                    distance_from_current = i - ticket_start_line
+                    distance_from_previous = i - last_ticket_end_line if last_ticket_end_line >= 0 else float('inf')
+                    
+                    if distance_from_current <= MAX_DISTANCE and distance_from_previous >= MIN_DISTANCE_FROM_PREVIOUS:
+                        # Solo asignar si no tiene descripción o si la nueva es más específica
+                        if not current_ticket['descripcion'] or len(line) > len(current_ticket['descripcion']):
+                            old_desc = current_ticket['descripcion']
+                            current_ticket['descripcion'] = line
+                            ticket_descriptions.append(line)
+                            # #region agent log
+                            debug_log(session_id, run_id, "C", f"scraper_firecrawl.py:357", "Descripción asignada", {
+                                "line_number": i,
+                                "line_content": line,
+                                "ticket_tipo": current_ticket['tipo'],
+                                "descripcion_anterior": old_desc,
+                                "descripcion_nueva": current_ticket['descripcion'],
+                                "distance_from_current": distance_from_current,
+                                "distance_from_previous": distance_from_previous
+                            })
+                            # #endregion
             
             # Añadir último ticket
             if current_ticket:
                 tickets.append(current_ticket)
+            
+            # #region agent log
+            debug_log(session_id, run_id, "A", "scraper_firecrawl.py:361", "Tickets antes de deduplicación", {
+                "total_tickets": len(tickets),
+                "tickets": [t.copy() for t in tickets]
+            })
+            # #endregion
             
             # --- DEDUPLICACIÓN DE TICKETS ---
             # Eliminar duplicados exactos (mismo nombre y precio)
@@ -376,9 +536,23 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                 if ticket_id not in seen_tickets:
                     seen_tickets.add(ticket_id)
                     unique_tickets.append(t)
+                else:
+                    # #region agent log
+                    debug_log(session_id, run_id, "D", "scraper_firecrawl.py:370", "Ticket DUPLICADO eliminado", {
+                        "ticket_duplicado": t.copy(),
+                        "ticket_id": ticket_id
+                    })
+                    # #endregion
             
             tickets = unique_tickets
             # --------------------------------
+            
+            # #region agent log
+            debug_log(session_id, run_id, "A", "scraper_firecrawl.py:380", "Tickets después de deduplicación", {
+                "total_tickets": len(tickets),
+                "tickets": [t.copy() for t in tickets]
+            })
+            # #endregion
             
             # Usar la primera descripción de ticket como descripción general del evento
             if ticket_descriptions:
@@ -412,20 +586,101 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
         # ===== INTEGRAR URLs EXACTAS DESDE SCHEMA/RAW =====
         schema_tickets = extract_tickets_from_schema(raw_html)
         
+        # #region agent log
+        debug_log(session_id, run_id, "B", "scraper_firecrawl.py:413", "Schema tickets extraídos", {
+            "schema_tickets_count": len(schema_tickets),
+            "schema_tickets": [st.copy() for st in schema_tickets]
+        })
+        # #endregion
+        
         if schema_tickets:
             # Si ya tenemos tickets de la fase markdown/html, intentar enriquecerlos con la URL exacta
             if tickets:
+                # Crear un conjunto de schema_tickets usados para evitar asignaciones duplicadas
+                used_schema_tickets = set()
+                
                 for t in tickets:
-                    # Buscar coincidencia por nombre o precio
-                    for st in schema_tickets:
-                        if st['tipo'] == t['tipo'] or (st['precio'] == t['precio'] and st['precio'] != "0"):
-                            t['url_compra'] = st['url_compra']
+                    # #region agent log
+                    debug_log(session_id, run_id, "B", "scraper_firecrawl.py:418", "Buscando match para ticket", {
+                        "ticket": t.copy(),
+                        "schema_tickets_disponibles": [st.copy() for st in schema_tickets]
+                    })
+                    # #endregion
+                    
+                    # Buscar coincidencia: PRIORIZAR match por nombre, luego por precio
+                    # Solo usar match por precio si NO hay match por nombre y el precio es único
+                    matched = False
+                    best_match = None
+                    match_type = None
+                    
+                    # Primero buscar match exacto por nombre
+                    for idx, st in enumerate(schema_tickets):
+                        if idx in used_schema_tickets:
+                            continue
+                        if st['tipo'] == t['tipo']:
+                            best_match = (idx, st)
+                            match_type = "name"
+                            matched = True
                             break
+                    
+                    # Si no hay match por nombre, buscar por precio (solo si el precio es único)
+                    if not matched and t['precio'] != "0":
+                        # Contar cuántos schema_tickets tienen el mismo precio
+                        price_matches = [st for idx, st in enumerate(schema_tickets) 
+                                       if idx not in used_schema_tickets 
+                                       and st['precio'] == t['precio'] 
+                                       and st['precio'] != "0"]
+                        
+                        # Solo usar match por precio si hay exactamente UN match (evitar ambigüedad)
+                        if len(price_matches) == 1:
+                            for idx, st in enumerate(schema_tickets):
+                                if idx in used_schema_tickets:
+                                    continue
+                                if st['precio'] == t['precio'] and st['precio'] != "0":
+                                    best_match = (idx, st)
+                                    match_type = "price_unique"
+                                    matched = True
+                                    break
+                    
+                    if matched and best_match:
+                        idx, st = best_match
+                        used_schema_tickets.add(idx)  # Marcar como usado
+                        old_url = t['url_compra']
+                        t['url_compra'] = st['url_compra']
+                        
+                        # #region agent log
+                        debug_log(session_id, run_id, "B", "scraper_firecrawl.py:421", "MATCH encontrado", {
+                            "ticket_tipo": t['tipo'],
+                            "ticket_precio": t['precio'],
+                            "schema_tipo": st['tipo'],
+                            "schema_precio": st['precio'],
+                            "match_type": match_type,
+                            "url_anterior": old_url,
+                            "url_nueva": t['url_compra']
+                        })
+                        # #endregion
+                    else:
+                        # #region agent log
+                        debug_log(session_id, run_id, "B", "scraper_firecrawl.py:421", "NO se encontró match", {
+                            "ticket": t.copy(),
+                            "reason": "no_match" if not matched else "ambiguous_price"
+                        })
+                        # #endregion
             else:
                 tickets = schema_tickets
 
         if tickets:
-            event['tickets'] = tickets
+            # Crear copias profundas de los tickets para evitar referencias compartidas
+            event['tickets'] = [copy.deepcopy(t) for t in tickets]
+        
+        # #region agent log
+        debug_log(session_id, run_id, "A", "scraper_firecrawl.py:428", "Tickets finales", {
+            "total_tickets": len(event.get('tickets', [])),
+            "tickets_finales": [copy.deepcopy(t) for t in event.get('tickets', [])],
+            "event_name": event.get('name', 'N/A'),
+            "event_code": event.get('code', 'N/A')
+        })
+        # #endregion
         
         # ===== GÉNEROS MUSICALES / TAGS =====
         tags = []
@@ -491,10 +746,26 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
         if venue_info:
             event['venue_info'] = venue_info
         
+        # #region agent log
+        debug_log(session_id, run_id, "A", "scraper_firecrawl.py:494", "scrape_event_details END", {
+            "event_name": event.get('name', 'N/A'),
+            "tickets_count": len(event.get('tickets', [])),
+            "tickets": [t.copy() for t in event.get('tickets', [])],
+            "description": event.get('description', '')[:100]
+        })
+        # #endregion
+        
         return event
         
     except Exception as e:
         print(f"      ⚠️ Error detalles: {e}")
+        # #region agent log
+        debug_log(session_id, run_id, "E", "scraper_firecrawl.py:496", "ERROR en scrape_event_details", {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "event_url": event_url
+        })
+        # #endregion
         return event
 
 
@@ -533,9 +804,9 @@ def transform_to_app_format(events: List[Dict]) -> List[Dict]:
         # Construir entradas desde tickets extraídos
         entradas = []
         
-        # Usar tickets extraídos si existen
+        # Usar tickets extraídos si existen (hacer copia profunda para evitar mutaciones)
         if event.get('tickets'):
-            entradas = event['tickets']
+            entradas = [copy.deepcopy(t) for t in event['tickets']]
         else:
             # Fallback a precios individuales
             for price in event.get('prices', []):
@@ -612,7 +883,27 @@ def scrape_all_events(urls: List[str] = None, get_details: bool = True) -> List[
         print(f"\n🎫 Obteniendo detalles de {len(all_events)} eventos...")
         for i, event in enumerate(all_events):
             print(f"   [{i+1}/{len(all_events)}] {event.get('name', 'N/A')[:40]}...")
-            all_events[i] = scrape_event_details(firecrawl, event)
+            # #region agent log
+            session_id = "debug-session"
+            run_id = "run1"
+            debug_log(session_id, run_id, "F", "scraper_firecrawl.py:878", "Procesando evento en scrape_all_events", {
+                "event_index": i,
+                "event_name": event.get('name', 'N/A'),
+                "event_code": event.get('code', 'N/A'),
+                "event_url": event.get('url', 'N/A'),
+                "tickets_before": [t.copy() if isinstance(t, dict) else str(t) for t in event.get('tickets', [])]
+            })
+            # #endregion
+            result = scrape_event_details(firecrawl, event)
+            all_events[i] = result
+            # #region agent log
+            debug_log(session_id, run_id, "F", "scraper_firecrawl.py:880", "Evento procesado en scrape_all_events", {
+                "event_index": i,
+                "event_name": result.get('name', 'N/A'),
+                "event_code": result.get('code', 'N/A'),
+                "tickets_after": [t.copy() if isinstance(t, dict) else str(t) for t in result.get('tickets', [])]
+            })
+            # #endregion
     
     print(f"\n🎉 Total: {len(all_events)} eventos scrapeados")
     return all_events
