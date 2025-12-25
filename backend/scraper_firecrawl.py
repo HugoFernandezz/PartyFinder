@@ -4,8 +4,8 @@ Scraper de eventos para PartyFinder usando Firecrawl
 =====================================================
 Utiliza Firecrawl para bypass Cloudflare y extrae eventos del HTML.
 
-Este scraper es la alternativa más simple que funciona en Raspberry Pi
-sin necesidad de navegador local.
+Este scraper se ejecuta automáticamente mediante GitHub Actions 3 veces al día.
+No requiere navegador local ya que utiliza la API de Firecrawl.
 
 Uso:
     python3 scraper_firecrawl.py                    # Scraping completo

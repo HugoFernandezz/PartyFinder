@@ -2,13 +2,12 @@
 # ==================================
 
 # Scraping
-nodriver>=0.38
+firecrawl-py>=4.12.0
 beautifulsoup4>=4.12.0
 
-# Servidor API
-flask>=3.0.0
-flask-cors>=4.0.0
+# Firebase
+firebase-admin>=7.0.0
 
-# Para instalar Chromium (ejecutar después de pip install):
-# playwright install chromium
+# Nota: El scraper se ejecuta mediante GitHub Actions
+# Las dependencias se instalan automáticamente en el workflow
 
