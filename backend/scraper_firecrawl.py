@@ -654,9 +654,78 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
         })
         # #endregion
         
+        # Función para normalizar nombres para matching flexible (definir antes de usar)
+        def normalize_name(name: str) -> str:
+            if not name:
+                return ""
+            normalized = re.sub(r'\s+', ' ', name.strip().upper())
+            normalized = normalized.replace('PROMOCIÓN', 'PROMOCION')
+            normalized = normalized.replace('CONSUMICIÓN', 'CONSUMICION')
+            normalized = normalized.replace('CONSUMICIONES', 'CONSUMICION')
+            return normalized
+        
         if schema_tickets:
-            # Si ya tenemos tickets de la fase markdown/html, intentar enriquecerlos con la URL exacta
-            if tickets:
+            # ESTRATEGIA ADAPTATIVA: Priorizar schema cuando tenga precios válidos
+            # Si el schema tiene precios y los tickets del markdown no, usar schema como fuente principal
+            schema_has_prices = any(st.get('precio') and str(st.get('precio')).strip() not in ['0', 'None', ''] for st in schema_tickets)
+            markdown_has_prices = any(t.get('precio') and str(t.get('precio')).strip() not in ['0', 'None', ''] for t in tickets)
+            
+            # #region agent log
+            debug_log(session_id, run_id, "B", "scraper_firecrawl.py:657", "Evaluando estrategia de matching", {
+                "schema_tickets_count": len(schema_tickets),
+                "markdown_tickets_count": len(tickets),
+                "schema_has_prices": schema_has_prices,
+                "markdown_has_prices": markdown_has_prices
+            })
+            # #endregion
+            
+            # Si el schema tiene precios y el markdown no, priorizar schema
+            if schema_has_prices and not markdown_has_prices:
+                # #region agent log
+                debug_log(session_id, run_id, "B", "scraper_firecrawl.py:670", "Schema tiene precios, markdown no - priorizando schema", {
+                    "schema_tickets": [st.copy() for st in schema_tickets[:3]]
+                })
+                # #endregion
+                # Usar schema como base y enriquecer con nombres del markdown si coinciden
+                schema_tickets_dict = {normalize_name(st['tipo']): st for st in schema_tickets}
+                enriched_tickets = []
+                
+                for t in tickets:
+                    ticket_normalized = normalize_name(t['tipo'])
+                    if ticket_normalized in schema_tickets_dict:
+                        st = schema_tickets_dict[ticket_normalized]
+                        # Combinar: nombre del markdown, precio del schema
+                        enriched_ticket = copy.deepcopy(st)
+                        enriched_ticket['tipo'] = t['tipo']  # Preferir nombre del markdown
+                        enriched_tickets.append(enriched_ticket)
+                    else:
+                        # Si no hay match, intentar encontrar el mejor match parcial
+                        best_partial = None
+                        best_score = 0
+                        for st in schema_tickets:
+                            schema_normalized = normalize_name(st['tipo'])
+                            common = len(set(ticket_normalized.split()) & set(schema_normalized.split()))
+                            if common > best_score and common >= 2:
+                                best_score = common
+                                best_partial = st
+                        
+                        if best_partial:
+                            enriched_ticket = copy.deepcopy(best_partial)
+                            enriched_ticket['tipo'] = t['tipo']
+                            enriched_tickets.append(enriched_ticket)
+                        else:
+                            # Si no hay match, usar ticket del markdown pero intentar encontrar precio
+                            enriched_tickets.append(copy.deepcopy(t))
+                
+                # Si hay tickets del schema que no se usaron, añadirlos
+                used_schema_names = {normalize_name(t['tipo']) for t in enriched_tickets}
+                for st in schema_tickets:
+                    if normalize_name(st['tipo']) not in used_schema_names:
+                        enriched_tickets.append(copy.deepcopy(st))
+                
+                tickets = enriched_tickets
+            elif tickets:
+                # Si ambos tienen tickets, hacer matching inteligente
                 # Crear un conjunto de schema_tickets usados para evitar asignaciones duplicadas
                 used_schema_tickets = set()
                 
@@ -668,11 +737,25 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                     })
                     # #endregion
                     
-                    # Buscar coincidencia: PRIORIZAR match por nombre, luego por precio
+                    # Buscar coincidencia: PRIORIZAR match por nombre (flexible), luego por precio
                     # Solo usar match por precio si NO hay match por nombre y el precio es único
                     matched = False
                     best_match = None
                     match_type = None
+                    
+                    # Función para normalizar nombres para matching flexible
+                    def normalize_name(name: str) -> str:
+                        if not name:
+                            return ""
+                        # Normalizar: quitar espacios extra, convertir a mayúsculas, quitar acentos básicos
+                        normalized = re.sub(r'\s+', ' ', name.strip().upper())
+                        # Reemplazar variaciones comunes
+                        normalized = normalized.replace('PROMOCIÓN', 'PROMOCION')
+                        normalized = normalized.replace('CONSUMICIÓN', 'CONSUMICION')
+                        normalized = normalized.replace('CONSUMICIONES', 'CONSUMICION')
+                        return normalized
+                    
+                    ticket_name_normalized = normalize_name(t['tipo'])
                     
                     # Primero buscar match exacto por nombre
                     for idx, st in enumerate(schema_tickets):
@@ -680,9 +763,53 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                             continue
                         if st['tipo'] == t['tipo']:
                             best_match = (idx, st)
-                            match_type = "name"
+                            match_type = "name_exact"
                             matched = True
                             break
+                    
+                    # Si no hay match exacto, buscar match normalizado (flexible)
+                    if not matched:
+                        for idx, st in enumerate(schema_tickets):
+                            if idx in used_schema_tickets:
+                                continue
+                            schema_name_normalized = normalize_name(st['tipo'])
+                            if schema_name_normalized == ticket_name_normalized:
+                                best_match = (idx, st)
+                                match_type = "name_normalized"
+                                matched = True
+                                break
+                    
+                    # Si aún no hay match, buscar match parcial (contiene palabras clave importantes)
+                    if not matched:
+                        # Extraer palabras clave del ticket (ENTRADA, VIP, COPA, etc.)
+                        ticket_keywords = set(re.findall(r'\b(ENTRADA|VIP|COPA|COPAS|CONSUMICION|PROMOCION|RESERVADO|REDUCIDA|ANTICIPADA)\b', ticket_name_normalized))
+                        best_partial_match = None
+                        best_partial_score = 0
+                        
+                        for idx, st in enumerate(schema_tickets):
+                            if idx in used_schema_tickets:
+                                continue
+                            schema_name_normalized = normalize_name(st['tipo'])
+                            schema_keywords = set(re.findall(r'\b(ENTRADA|VIP|COPA|COPAS|CONSUMICION|PROMOCION|RESERVADO|REDUCIDA|ANTICIPADA)\b', schema_name_normalized))
+                            
+                            # Calcular score: palabras clave en común
+                            common_keywords = ticket_keywords & schema_keywords
+                            score = len(common_keywords)
+                            
+                            # Bonus si el nombre contiene números similares (ej: "1 COPA" vs "1 CONSUMICION")
+                            ticket_numbers = set(re.findall(r'\b(\d+)\b', ticket_name_normalized))
+                            schema_numbers = set(re.findall(r'\b(\d+)\b', schema_name_normalized))
+                            if ticket_numbers and schema_numbers and ticket_numbers == schema_numbers:
+                                score += 2
+                            
+                            if score > best_partial_score and score >= 2:  # Mínimo 2 palabras clave en común
+                                best_partial_match = (idx, st)
+                                best_partial_score = score
+                        
+                        if best_partial_match:
+                            best_match = best_partial_match
+                            match_type = "name_partial"
+                            matched = True
                     
                     # Si no hay match por nombre, buscar por precio (solo si el precio es único)
                     if not matched and t['precio'] != "0":
@@ -710,10 +837,14 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                         old_price = t['precio']
                         t['url_compra'] = st['url_compra']
                         
-                        # ACTUALIZAR PRECIO desde schema si el ticket no tiene precio o tiene "0"
-                        # El schema es más confiable que el markdown para precios
-                        if t['precio'] == "0" and st['precio'] and st['precio'] != "0":
-                            t['precio'] = st['precio']
+                        # SIEMPRE ACTUALIZAR PRECIO desde schema si está disponible
+                        # El schema es la fuente de verdad más confiable para precios
+                        if st['precio'] and st['precio'] != "0" and st['precio'] != "None":
+                            t['precio'] = str(st['precio']).strip()
+                        
+                        # También actualizar estado "agotadas" desde schema si está disponible
+                        if 'agotadas' in st:
+                            t['agotadas'] = st['agotadas']
                         
                         # #region agent log
                         debug_log(session_id, run_id, "B", "scraper_firecrawl.py:421", "MATCH encontrado", {
@@ -725,7 +856,8 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                             "match_type": match_type,
                             "url_anterior": old_url,
                             "url_nueva": t['url_compra'],
-                            "precio_actualizado": old_price != t['precio']
+                            "precio_actualizado": old_price != t['precio'],
+                            "agotadas_actualizada": t.get('agotadas', False)
                         })
                         # #endregion
                     else:
@@ -736,7 +868,14 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
                         })
                         # #endregion
             else:
+                # Si no hay tickets del markdown, usar directamente los del schema
                 tickets = schema_tickets
+                # #region agent log
+                debug_log(session_id, run_id, "B", "scraper_firecrawl.py:674", "Usando tickets directamente del schema (sin markdown)", {
+                    "schema_tickets_count": len(schema_tickets),
+                    "schema_tickets": [st.copy() for st in schema_tickets]
+                })
+                # #endregion
 
         if tickets:
             # Crear copias profundas de los tickets para evitar referencias compartidas
