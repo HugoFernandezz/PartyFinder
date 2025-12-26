@@ -230,6 +230,10 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
         # Buscar enlaces en markdown (formato: [texto](url))
         markdown_links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', markdown)
         print(f"   🔍 Markdown links encontrados: {len(markdown_links)}")
+        # Debug: mostrar los primeros enlaces encontrados
+        if markdown_links:
+            for i, (text, url) in enumerate(markdown_links[:5]):
+                print(f"   🔍 Link {i+1}: [{text}]({url})")
         
         for link_text, link_url in markdown_links:
             if '/events/' in link_url:
@@ -270,15 +274,28 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
                         'code': code
                     })
         
-        # Si aún no hay eventos, buscar URLs de eventos directamente en el texto markdown
+        # Si aún no hay eventos, buscar URLs de eventos directamente en el texto markdown y HTML
         if not events:
-            print(f"   🔍 Buscando URLs de eventos directamente en markdown...")
+            print(f"   🔍 Buscando URLs de eventos directamente en markdown y HTML...")
             if 'sala-rem' in venue_slug.lower():
-                # Para Sala Rem: buscar URLs completas como /es/sala-rem/events/slug--fecha-CODIGO
-                # Extraer el código del final (últimos 4 caracteres después del último guion)
-                event_urls = re.findall(r'/es/sala-rem/events/([^/\s\)]+)', markdown)
+                # Buscar en markdown primero
+                event_urls_md = re.findall(r'/es/sala-rem/events/([^/\s\)]+)', markdown)
+                print(f"   🔍 URLs encontradas en markdown: {len(event_urls_md)}")
+                
+                # También buscar en HTML (puede tener más información)
+                if html:
+                    # Buscar enlaces <a> con href que contenga /events/
+                    html_links = re.findall(r'href=["\']([^"\']*sala-rem/events/[^"\']+)["\']', html, re.IGNORECASE)
+                    print(f"   🔍 URLs encontradas en HTML: {len(html_links)}")
+                    # Combinar ambas fuentes
+                    all_urls = set(event_urls_md + [url.split('/events/')[-1] if '/events/' in url else url for url in html_links])
+                else:
+                    all_urls = set(event_urls_md)
+                
                 codes_found = set()
-                for url_slug in event_urls:
+                for url_slug in all_urls:
+                    # Limpiar la URL (puede tener parámetros o fragmentos)
+                    url_slug = url_slug.split('?')[0].split('#')[0]
                     # Extraer código del final
                     parts = url_slug.split('-')
                     if len(parts) > 0 and len(parts[-1]) == 4 and parts[-1].isalnum():
@@ -291,6 +308,8 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
                             'name': f"Evento {code}",  # Nombre genérico, se actualizará al scrapear detalles
                             'code': code
                         })
+                    else:
+                        print(f"   🔍 URL slug no válido: {url_slug}")
                 print(f"   🔍 URLs directas encontradas (Sala Rem): {len(codes_found)} códigos únicos")
             else:
                 # Para otras discotecas: buscar /events/CODIGO
