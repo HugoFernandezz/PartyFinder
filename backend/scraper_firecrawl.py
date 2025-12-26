@@ -340,32 +340,43 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None, ra
                         print(f"   🔍 URL slug no válido: {url_slug}")
                 print(f"   🔍 URLs directas encontradas (Sala Rem): {len(codes_found)} códigos únicos")
                 
-                # Si aún no hay eventos, buscar URLs completas directamente en el HTML
-                if not events and html:
-                    print(f"   🔍 Buscando URLs completas de eventos en HTML...")
-                    # Buscar todas las URLs que contengan sala-rem/events
-                    html_event_urls = re.findall(r'https?://[^"\s<>]+sala-rem/events/[^"\s<>]+', html, re.IGNORECASE)
-                    html_event_urls += re.findall(r'/es/sala-rem/events/[^"\s<>\)]+', html, re.IGNORECASE)
-                    
-                    print(f"   🔍 URLs de eventos encontradas en HTML: {len(html_event_urls)}")
-                    
-                    for event_url in set(html_event_urls):
-                        # Hacer URL absoluta si es relativa
-                        if not event_url.startswith('http'):
-                            event_url = f"https://web.fourvenues.com{event_url}"
+                # ESTRATEGIA: Buscar URLs completas en rawHtml primero (más información después del JS)
+                # Si no hay eventos, buscar URLs completas directamente en el HTML/rawHtml
+                if not events:
+                    html_to_search = raw_html if raw_html and len(raw_html) > len(html) else html
+                    if html_to_search:
+                        print(f"   🔍 Buscando URLs completas de eventos en {'rawHtml' if raw_html and len(raw_html) > len(html) else 'HTML'}...")
+                        # Buscar todas las URLs que contengan sala-rem/events
+                        html_event_urls = re.findall(r'https?://[^"\s<>]+sala-rem/events/[^"\s<>]+', html_to_search, re.IGNORECASE)
+                        html_event_urls += re.findall(r'/es/sala-rem/events/[^"\s<>\)]+', html_to_search, re.IGNORECASE)
                         
-                        # Extraer código del final
-                        url_slug = event_url.split('/events/')[-1].split('?')[0].split('#')[0]
-                        parts = url_slug.split('-')
-                        if len(parts) > 0 and len(parts[-1]) == 4 and parts[-1].isalnum():
-                            code = parts[-1]
-                            events.append({
-                                'url': event_url,
-                                'venue_slug': venue_slug,
-                                'name': f"Evento {code}",
-                                'code': code
-                            })
-                            print(f"   🔍 Evento encontrado en HTML: {code} - {event_url[:80]}...")
+                        print(f"   🔍 URLs de eventos encontradas: {len(html_event_urls)}")
+                        
+                        for event_url in set(html_event_urls):
+                            # Hacer URL absoluta si es relativa
+                            if not event_url.startswith('http'):
+                                event_url = f"https://web.fourvenues.com{event_url}"
+                            
+                            # Extraer código del final
+                            url_slug = event_url.split('/events/')[-1].split('?')[0].split('#')[0]
+                            parts = url_slug.split('-')
+                            if len(parts) > 0 and len(parts[-1]) == 4 and parts[-1].isalnum():
+                                code = parts[-1]
+                                # Extraer nombre del slug si es posible
+                                # Formato: friday-session-sala-rem--26-12-2025-EI7Q
+                                slug_parts = url_slug.split('--')
+                                if len(slug_parts) >= 1:
+                                    name_from_slug = slug_parts[0].replace('-', ' ').title()
+                                else:
+                                    name_from_slug = f"Evento {code}"
+                                
+                                events.append({
+                                    'url': event_url,
+                                    'venue_slug': venue_slug,
+                                    'name': name_from_slug,
+                                    'code': code
+                                })
+                                print(f"   🔍 Evento encontrado en HTML: {name_from_slug} - {code} - {event_url[:80]}...")
                 
                 # ESTRATEGIA FINAL: Si aún no hay eventos, construir URLs basándose en nombres y fechas del markdown
                 # y buscar códigos en el HTML de forma más amplia
