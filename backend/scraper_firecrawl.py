@@ -365,7 +365,7 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
             ticket_descriptions = []
             ticket_start_line = -1  # Línea donde empezó el ticket actual
             last_ticket_end_line = -1  # Línea donde terminó el último ticket guardado
-            MAX_DISTANCE = 5  # Máxima distancia en líneas para asignar precio/descripción
+            MAX_DISTANCE = 30  # Máxima distancia en líneas para asignar precio/descripción (aumentado de 5 a 30)
             MIN_DISTANCE_FROM_PREVIOUS = 2  # Distancia mínima desde el último ticket guardado
             
             # #region agent log
