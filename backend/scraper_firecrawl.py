@@ -1525,15 +1525,21 @@ def scrape_all_events(urls: List[str] = None, get_details: bool = True) -> List[
             })
             # #endregion
             result = scrape_event_details(firecrawl, event)
-            all_events[i] = result
-            # #region agent log
-            debug_log(session_id, run_id, "F", "scraper_firecrawl.py:880", "Evento procesado en scrape_all_events", {
-                "event_index": i,
-                "event_name": result.get('name', 'N/A'),
-                "event_code": result.get('code', 'N/A'),
-                "tickets_after": [t.copy() if isinstance(t, dict) else str(t) for t in result.get('tickets', [])]
-            })
-            # #endregion
+            
+            # Filtrar eventos inválidos (URLs que no retornaron contenido)
+            if result.get('_invalid'):
+                print(f"   ⚠️ Evento inválido descartado: {result.get('name', 'N/A')} - {result.get('url', 'N/A')}")
+                all_events[i] = None  # Marcar para filtrar después
+            else:
+                all_events[i] = result
+                # #region agent log
+                debug_log(session_id, run_id, "F", "scraper_firecrawl.py:880", "Evento procesado en scrape_all_events", {
+                    "event_index": i,
+                    "event_name": result.get('name', 'N/A'),
+                    "event_code": result.get('code', 'N/A'),
+                    "tickets_after": [t.copy() if isinstance(t, dict) else str(t) for t in result.get('tickets', [])]
+                })
+                # #endregion
     
     print(f"\n🎉 Total: {len(all_events)} eventos scrapeados")
     return all_events
