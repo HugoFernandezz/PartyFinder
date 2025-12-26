@@ -710,6 +710,19 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
         
         event_url = f"{base_url}{event_url}"
     
+    # Extraer fecha de la URL si está disponible (formato: --26-12-2025-)
+    # Esto es especialmente útil para Sala Rem donde la fecha está en la URL
+    if not event.get('date_text') and 'sala-rem' in event.get('venue_slug', '').lower():
+        date_match = re.search(r'--(\d{1,2})-(\d{2})-(\d{4})-', event_url)
+        if date_match:
+            day, month, year = date_match.group(1), date_match.group(2), date_match.group(3)
+            month_names = {'01': 'enero', '02': 'febrero', '03': 'marzo', '04': 'abril',
+                          '05': 'mayo', '06': 'junio', '07': 'julio', '08': 'agosto',
+                          '09': 'septiembre', '10': 'octubre', '11': 'noviembre', '12': 'diciembre'}
+            event['date_text'] = f"{day} {month_names.get(month, 'diciembre')}"
+            event['_date_parts'] = {'day': day, 'month': month, 'year': year}
+            print(f"      📅 Fecha extraída de URL: {event['date_text']}")
+    
     try:
         # Solicitar HTML, MARKDOWN y RAWHTML
         # - markdown: descripciones legibles
