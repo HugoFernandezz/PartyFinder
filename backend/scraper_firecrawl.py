@@ -76,9 +76,10 @@ VENUE_URLS = [
 ]
 
 
-def extract_events_from_html(html: str, venue_url: str) -> List[Dict]:
+def extract_events_from_html(html: str, venue_url: str, markdown: str = None) -> List[Dict]:
     """
     Extrae eventos del HTML de FourVenues de forma robusta.
+    Si se proporciona markdown, también se usa para extraer información.
     """
     events = []
     soup = BeautifulSoup(html, 'html.parser')
@@ -198,32 +199,55 @@ def scrape_venue(firecrawl: Firecrawl, url: str) -> List[Dict]:
     print(f"\n📡 Scrapeando: {url}")
     
     try:
-        # Para Dodo Club y otros que puedan tener Queue-Fair, subimos el tiempo
-        # y añadimos un wait_for para asegurar que el contenido esté ahí.
-        result = firecrawl.scrape(
-            url,
-            formats=["html"],
-            actions=[
-                {"type": "wait", "milliseconds": 8000},
-                {"type": "scroll", "direction": "down", "amount": 500},
-                {"type": "wait", "milliseconds": 2000}
-            ],
-            # Si vemos que falla por Queue-Fair, Firecrawl suele esperar automáticamente
-            # pero podemos forzar que espere a que aparezca un card de evento
-            wait_for=5000 
-        )
+        # Para Sala Rem, usar más tiempo y formatos adicionales ya que el contenido se carga dinámicamente
+        is_sala_rem = "sala-rem" in url.lower()
+        
+        if is_sala_rem:
+            # Sala Rem necesita más tiempo y formato markdown para mejor extracción
+            result = firecrawl.scrape(
+                url,
+                formats=["html", "markdown"],  # Markdown puede ayudar a extraer mejor el contenido
+                actions=[
+                    {"type": "wait", "milliseconds": 15000},  # Más tiempo inicial
+                    {"type": "scroll", "direction": "down", "amount": 1000},
+                    {"type": "wait", "milliseconds": 5000},
+                    {"type": "scroll", "direction": "down", "amount": 1000},
+                    {"type": "wait", "milliseconds": 5000},
+                    {"type": "scroll", "direction": "down", "amount": 1000},
+                    {"type": "wait", "milliseconds": 5000}
+                ],
+                wait_for=15000  # Esperar más tiempo
+            )
+        else:
+            # Para Dodo Club y otros que puedan tener Queue-Fair, subimos el tiempo
+            # y añadimos un wait_for para asegurar que el contenido esté ahí.
+            result = firecrawl.scrape(
+                url,
+                formats=["html"],
+                actions=[
+                    {"type": "wait", "milliseconds": 8000},
+                    {"type": "scroll", "direction": "down", "amount": 500},
+                    {"type": "wait", "milliseconds": 2000}
+                ],
+                # Si vemos que falla por Queue-Fair, Firecrawl suele esperar automáticamente
+                # pero podemos forzar que espere a que aparezca un card de evento
+                wait_for=5000 
+            )
         
         html = result.html or ""
+        markdown = result.markdown or "" if hasattr(result, 'markdown') else ""
         status = result.metadata.status_code if result.metadata else "N/A"
         
         print(f"   Status: {status}")
         print(f"   HTML: {len(html)} bytes")
+        if markdown:
+            print(f"   Markdown: {len(markdown)} caracteres")
         
         if not html:
             print("   ❌ No se recibió HTML")
             return []
         
-        events = extract_events_from_html(html, url)
+        events = extract_events_from_html(html, url, markdown)
         
         # Si sigue sin pillar nada, intentar un segundo intento con JS más agresivo
         # Aplicar a Dodo Club y Sala Rem (ambos pueden tener estructuras similares o necesitar más tiempo)
@@ -242,8 +266,11 @@ def scrape_venue(firecrawl: Firecrawl, url: str) -> List[Dict]:
                 wait_for=10000
             )
             html = result.html or ""
+            markdown = result.markdown or "" if hasattr(result, 'markdown') else ""
             print(f"   HTML segundo intento: {len(html)} bytes")
-            events = extract_events_from_html(html, url)
+            if markdown:
+                print(f"   Markdown segundo intento: {len(markdown)} caracteres")
+            events = extract_events_from_html(html, url, markdown)
 
         print(f"   ✅ {len(events)} eventos encontrados")
         
