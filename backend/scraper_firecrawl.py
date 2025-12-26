@@ -392,8 +392,18 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
                         if current_date and line.strip() and not line.startswith('##') and not re.match(r'^\d{1,2}:\d{2}', line.strip()):
                             event_name = line.strip()
                             # Limpiar emojis y caracteres especiales para el slug
-                            slug_name = re.sub(r'[^\w\s-]', '', event_name.lower())
-                            slug_name = re.sub(r'\s+', '-', slug_name).strip('-')
+                            # Reemplazar caracteres especiales comunes primero
+                            slug_name = event_name.lower()
+                            # Reemplazar "|" con espacio, luego limpiar
+                            slug_name = slug_name.replace('|', ' ')
+                            slug_name = slug_name.replace('/', ' ')
+                            # Eliminar emojis y caracteres especiales, mantener solo letras, números, espacios y guiones
+                            slug_name = re.sub(r'[^\w\s-]', '', slug_name)
+                            # Reemplazar múltiples espacios con un solo guion
+                            slug_name = re.sub(r'\s+', '-', slug_name)
+                            # Eliminar guiones múltiples consecutivos
+                            slug_name = re.sub(r'-+', '-', slug_name)
+                            slug_name = slug_name.strip('-')
                             event_info.append({
                                 'name': event_name,
                                 'slug': slug_name,
