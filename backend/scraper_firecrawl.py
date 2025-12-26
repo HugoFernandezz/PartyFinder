@@ -587,24 +587,29 @@ def scrape_venue(firecrawl: Firecrawl, url: str) -> List[Dict]:
             is_sala_rem_retry = "sala-rem" in url.lower()
             result = firecrawl.scrape(
                 url,
-                formats=["html", "markdown"] if is_sala_rem_retry else ["html"],
+                formats=["html", "markdown", "rawHtml"] if is_sala_rem_retry else ["html"],
                 actions=[
-                    {"type": "wait", "milliseconds": 10000},  # Más tiempo para Sala Rem
-                    {"type": "scroll", "direction": "down", "amount": 1000},
-                    {"type": "wait", "milliseconds": 5000},
-                    {"type": "scroll", "direction": "down", "amount": 1000},
-                    {"type": "wait", "milliseconds": 5000},
-                    {"type": "scroll", "direction": "down", "amount": 1000},
-                    {"type": "wait", "milliseconds": 5000}
+                    {"type": "wait", "milliseconds": 20000},  # Más tiempo para Sala Rem
+                    {"type": "scroll", "direction": "down", "amount": 1500},
+                    {"type": "wait", "milliseconds": 8000},
+                    {"type": "scroll", "direction": "down", "amount": 1500},
+                    {"type": "wait", "milliseconds": 8000},
+                    {"type": "scroll", "direction": "down", "amount": 1500},
+                    {"type": "wait", "milliseconds": 8000}
                 ],
-                wait_for=15000 if is_sala_rem_retry else 10000
+                wait_for=20000 if is_sala_rem_retry else 10000
             )
             html = result.html or ""
+            raw_html = getattr(result, 'raw_html', None) or ""
             markdown = result.markdown or "" if hasattr(result, 'markdown') else ""
             print(f"   HTML segundo intento: {len(html)} bytes")
+            if raw_html:
+                print(f"   Raw HTML segundo intento: {len(raw_html)} bytes")
             if markdown:
                 print(f"   Markdown segundo intento: {len(markdown)} caracteres")
-            events = extract_events_from_html(html, url, markdown)
+            # Usar raw_html si está disponible y es más grande
+            html_to_use = raw_html if is_sala_rem_retry and raw_html and len(raw_html) > len(html) else html
+            events = extract_events_from_html(html_to_use, url, markdown, raw_html=raw_html)
 
         print(f"   ✅ {len(events)} eventos encontrados")
         
