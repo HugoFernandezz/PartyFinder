@@ -665,9 +665,19 @@ def extract_tickets_from_schema(html: str) -> List[Dict]:
     """
     tickets_from_schema = []
     
+    if not html:
+        return tickets_from_schema
+    
     # Buscar bloques script con application/ld+json
     soup = BeautifulSoup(html, 'html.parser')
     scripts = soup.find_all('script', type='application/ld+json')
+    
+    # #region agent log
+    debug_log("debug-session", "run1", "I", f"scraper_firecrawl.py:{sys._getframe().f_lineno}", "Buscando tickets en schema.org", {
+        "html_length": len(html),
+        "scripts_found": len(scripts)
+    })
+    # #endregion
     
     for script in scripts:
         try:
@@ -699,6 +709,15 @@ def extract_tickets_from_schema(html: str) -> List[Dict]:
                         url = offer.get('url')
                         name = offer.get('name')
                         price = offer.get('price')
+                        
+                        # #region agent log
+                        debug_log("debug-session", "run1", "J", f"scraper_firecrawl.py:{sys._getframe().f_lineno}", "Offer encontrado en schema", {
+                            "url": url[:100] if url else None,
+                            "name": name,
+                            "price": price,
+                            "has_tickets_url": url and '/tickets/' in url if url else False
+                        })
+                        # #endregion
                         
                         if url and '/tickets/' in url:
                             # Detectar estado "agotadas" desde múltiples fuentes en el schema
@@ -1240,6 +1259,12 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
         
         # #region agent log
         debug_log(session_id, run_id, "B", "scraper_firecrawl.py:413", "Schema tickets extraídos", {
+            "schema_tickets_count": len(schema_tickets),
+            "schema_tickets": [t.copy() if isinstance(t, dict) else str(t) for t in schema_tickets],
+            "raw_html_length": len(raw_html),
+            "event_url": event_url[:100]
+        })
+        # #endregion
             "schema_tickets_count": len(schema_tickets),
             "schema_tickets": [st.copy() for st in schema_tickets]
         })
