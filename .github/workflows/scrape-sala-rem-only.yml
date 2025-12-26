@@ -11,30 +11,46 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    
+        cache: 'pip'
+        cache-dependency-path: backend/requirements.txt
+      
     - name: Install dependencies
       run: |
         cd backend
         pip install -r requirements.txt
+      
+    - name: Install Firecrawl SDK and Firebase Admin
+      run: pip install firecrawl-py firebase-admin
+      
+    - name: Create data directory
+      run: mkdir -p backend/data
+
+    - name: Create Firebase Credentials
+      env:
+        FIREBASE_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      run: |
+        cd backend
+        echo "$FIREBASE_KEY" > serviceAccountKey.json
     
     - name: Run scraper (Sala Rem only)
       env:
         FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
-        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       run: |
         cd backend
         python scraper_firecrawl.py --urls "https://web.fourvenues.com/es/sala-rem/events" --upload
     
     - name: Upload scraped data
       uses: actions/upload-artifact@v4
+      if: always()
       with:
-        name: scraped-data-sala-rem
+        name: scraped-data-sala-rem-${{ github.run_number }}
         path: backend/data/*.json
         retention-days: 7
         if-no-files-found: warn
