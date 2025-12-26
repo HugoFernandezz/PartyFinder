@@ -108,9 +108,27 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
             }
             
             # Código del evento
-            match = re.search(r'/events/([A-Z0-9-]+)$', href)
-            if match:
-                event['code'] = match.group(1)
+            # Para Sala Rem: formato es /events/slug--fecha-CODIGO (ej: friday-session--sala-rem--26-12-2025-EI7Q)
+            # Para otros: formato es /events/CODIGO (ej: LKB5)
+            if 'sala-rem' in venue_slug.lower():
+                # Extraer código del final (últimos 4 caracteres después del último guion)
+                match = re.search(r'/events/[^/]+-([A-Z0-9]{4})$', href)
+                if match:
+                    event['code'] = match.group(1)
+                else:
+                    # Fallback: intentar capturar todo y extraer los últimos 4 caracteres
+                    match = re.search(r'/events/([^/]+)$', href)
+                    if match:
+                        slug = match.group(1)
+                        # El código está al final, después del último guion
+                        parts = slug.split('-')
+                        if len(parts) > 0 and len(parts[-1]) == 4:
+                            event['code'] = parts[-1]
+            else:
+                # Formato estándar: /events/CODIGO
+                match = re.search(r'/events/([A-Z0-9-]+)$', href)
+                if match:
+                    event['code'] = match.group(1)
             
             # Parsear aria-label
             name_match = re.search(r'Evento\s*:\s*(.+?)(?:\.\s*Edad|\s*$)', aria_label)
@@ -204,9 +222,28 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
         for link_text, link_url in markdown_links:
             if '/events/' in link_url:
                 # Extraer código del evento
-                code_match = re.search(r'/events/([A-Z0-9-]+)', link_url)
-                if code_match:
-                    code = code_match.group(1)
+                code = None
+                if 'sala-rem' in venue_slug.lower():
+                    # Para Sala Rem: formato es /events/slug--fecha-CODIGO
+                    # Extraer código del final (últimos 4 caracteres después del último guion)
+                    code_match = re.search(r'/events/[^/]+-([A-Z0-9]{4})(?:/|$)', link_url)
+                    if code_match:
+                        code = code_match.group(1)
+                    else:
+                        # Fallback: extraer del final de la URL
+                        slug_match = re.search(r'/events/([^/]+)(?:/|$)', link_url)
+                        if slug_match:
+                            slug = slug_match.group(1)
+                            parts = slug.split('-')
+                            if len(parts) > 0 and len(parts[-1]) == 4:
+                                code = parts[-1]
+                else:
+                    # Formato estándar: /events/CODIGO
+                    code_match = re.search(r'/events/([A-Z0-9-]+)(?:/|$)', link_url)
+                    if code_match:
+                        code = code_match.group(1)
+                
+                if code:
                     # Hacer URL absoluta si es relativa
                     if not link_url.startswith('http'):
                         if 'sala-rem' in venue_slug.lower():
@@ -224,22 +261,37 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
         # Si aún no hay eventos, buscar URLs de eventos directamente en el texto markdown
         if not events:
             print(f"   🔍 Buscando URLs de eventos directamente en markdown...")
-            # Buscar patrones como /es/sala-rem/events/CODIGO o /events/CODIGO
-            event_url_patterns = re.findall(r'(?:/es/sala-rem/events/|/events/)([A-Z0-9-]{4,})', markdown)
-            for code in set(event_url_patterns):
-                # Construir URL completa
-                if 'sala-rem' in venue_slug.lower():
-                    event_url = f"https://web.fourvenues.com/es/sala-rem/events/{code}"
-                else:
+            if 'sala-rem' in venue_slug.lower():
+                # Para Sala Rem: buscar URLs completas como /es/sala-rem/events/slug--fecha-CODIGO
+                # Extraer el código del final (últimos 4 caracteres después del último guion)
+                event_urls = re.findall(r'/es/sala-rem/events/([^/\s\)]+)', markdown)
+                codes_found = set()
+                for url_slug in event_urls:
+                    # Extraer código del final
+                    parts = url_slug.split('-')
+                    if len(parts) > 0 and len(parts[-1]) == 4 and parts[-1].isalnum():
+                        code = parts[-1]
+                        codes_found.add(code)
+                        event_url = f"https://web.fourvenues.com/es/sala-rem/events/{url_slug}"
+                        events.append({
+                            'url': event_url,
+                            'venue_slug': venue_slug,
+                            'name': f"Evento {code}",  # Nombre genérico, se actualizará al scrapear detalles
+                            'code': code
+                        })
+                print(f"   🔍 URLs directas encontradas (Sala Rem): {len(codes_found)} códigos únicos")
+            else:
+                # Para otras discotecas: buscar /events/CODIGO
+                event_url_patterns = re.findall(r'/events/([A-Z0-9-]{4,})', markdown)
+                for code in set(event_url_patterns):
                     event_url = f"https://site.fourvenues.com/es/{venue_slug}/events/{code}"
-                
-                events.append({
-                    'url': event_url,
-                    'venue_slug': venue_slug,
-                    'name': f"Evento {code}",  # Nombre genérico, se actualizará al scrapear detalles
-                    'code': code
-                })
-            print(f"   🔍 URLs directas encontradas: {len(event_url_patterns)}")
+                    events.append({
+                        'url': event_url,
+                        'venue_slug': venue_slug,
+                        'name': f"Evento {code}",
+                        'code': code
+                    })
+                print(f"   🔍 URLs directas encontradas: {len(event_url_patterns)}")
         
         print(f"   🔍 Markdown: {len(events)} eventos encontrados")
 
