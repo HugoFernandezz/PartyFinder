@@ -1019,9 +1019,49 @@ def scrape_event_details(firecrawl: Firecrawl, event: Dict) -> Dict:
             event['description'] = event_description
         
         # ===== IMAGEN DE ALTA CALIDAD =====
-        og_image = soup.find('meta', {'property': 'og:image'})
+        # Buscar imagen en múltiples fuentes para Sala Rem
+        image_found = False
+        
+        # 1. Meta og:image (más confiable)
+        og_image = soup.find('meta', {'property': 'og:image'}) if soup else None
         if og_image:
-            event['image'] = og_image.get('content', event.get('image', ''))
+            img_url = og_image.get('content', '')
+            if img_url and 'fourvenues.com' in img_url:
+                event['image'] = img_url
+                image_found = True
+                print(f"      📷 Imagen encontrada (og:image): {img_url[:80]}...")
+        
+        # 2. Buscar en schema.org JSON-LD (puede tener imagen de mayor calidad)
+        if not image_found and raw_html:
+            schema_image_match = re.search(r'"image"\s*:\s*"([^"]+)"', raw_html)
+            if schema_image_match:
+                img_url = schema_image_match.group(1)
+                if 'fourvenues.com' in img_url:
+                    event['image'] = img_url
+                    image_found = True
+                    print(f"      📷 Imagen encontrada (schema): {img_url[:80]}...")
+        
+        # 3. Buscar imagen principal en el HTML (fallback)
+        if not image_found and soup:
+            main_image = soup.find('img', {'class': lambda x: x and ('hero' in str(x).lower() or 'main' in str(x).lower() or 'event' in str(x).lower())})
+            if not main_image:
+                # Buscar cualquier imagen grande en el contenido principal
+                main_image = soup.find('img', src=lambda x: x and 'fourvenues.com' in x and ('cdn-cgi' in x or 'imagedelivery' in x))
+            if main_image:
+                img_url = main_image.get('src', '')
+                if img_url:
+                    # Hacer URL absoluta si es relativa
+                    if not img_url.startswith('http'):
+                        if 'sala-rem' in event.get('venue_slug', '').lower():
+                            img_url = f"https://web.fourvenues.com{img_url}" if img_url.startswith('/') else f"https://web.fourvenues.com/{img_url}"
+                        else:
+                            img_url = f"https://site.fourvenues.com{img_url}" if img_url.startswith('/') else f"https://site.fourvenues.com/{img_url}"
+                    event['image'] = img_url
+                    image_found = True
+                    print(f"      📷 Imagen encontrada (HTML): {img_url[:80]}...")
+        
+        if not image_found:
+            print(f"      ⚠️ No se encontró imagen para el evento")
         
         # ===== INTEGRAR URLs EXACTAS DESDE SCHEMA/RAW =====
         schema_tickets = extract_tickets_from_schema(raw_html)
