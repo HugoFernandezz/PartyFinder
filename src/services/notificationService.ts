@@ -7,8 +7,8 @@ import { db } from './firebase';
 import { Party } from '../types';
 import { NotificationAlert } from '../types/notifications';
 
-const EVENTS_SNAPSHOT_KEY = '@partyfinder_events_snapshot';
-const FCM_TOKEN_KEY = '@partyfinder_fcm_token';
+const EVENTS_SNAPSHOT_KEY = '@jaleo_events_snapshot';
+const FCM_TOKEN_KEY = '@jaleo_fcm_token';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Servicio de Push Notifications para PartyFinder
+Servicio de Push Notifications para Jaleo
 ===============================================
 Detecta nuevos eventos y envía notificaciones push a usuarios con alertas activas.
 
@@ -191,7 +191,7 @@ def format_date(date_str: str) -> str:
 def check_and_send_notifications():
     """Función principal: detecta nuevos eventos y envía notificaciones."""
     print("=" * 60)
-    print("PartyFinder - Push Notifications Service")
+    print("Jaleo - Push Notifications Service")
     print("=" * 60)
     
     db = get_db()

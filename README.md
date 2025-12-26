@@ -1,4 +1,4 @@
-# PartyFinder Murcia 🎉
+# Jaleo Murcia 🎉
 
 Una aplicación móvil para descubrir las mejores fiestas y eventos nocturnos en Murcia.
 
@@ -97,7 +97,7 @@ src/
 ```bash
 # Clonar el repositorio
 git clone <repository-url>
-cd PartyFinder
+cd Jaleo
 
 # Instalar dependencias
 npm install

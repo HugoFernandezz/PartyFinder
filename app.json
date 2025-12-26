@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "partyfinder",
-    "slug": "partyfinder-murcia",
+    "name": "Jaleo",
+    "slug": "jaleo-murcia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/IconPartyFinder.png",
@@ -18,7 +18,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.partyfinder.app",
+      "bundleIdentifier": "com.jaleo.app",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.partyfinder.app",
+      "package": "com.jaleo.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/IconPartyFinder.png",
         "backgroundColor": "#ffffff"

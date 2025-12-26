@@ -12,7 +12,7 @@ Si usas **EAS Build** (recomendado), Expo maneja automáticamente:
 
 ### 1. Obtener Project ID de Expo (OBLIGATORIO)
 
-El `projectId` actual (`partyfinder-murcia`) **NO es válido**. Necesitas:
+El `projectId` actual (`jaleo-murcia`) **NO es válido**. Necesitas:
 
 1. Ve a [Expo Dashboard](https://expo.dev) e inicia sesión
 2. Crea un proyecto nuevo o selecciona uno existente
