@@ -170,11 +170,23 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
                 if not href or '/events/' not in href: continue
                 if any(e['url'] == href for e in events): continue
 
+                # Extraer código del evento
+                if 'sala-rem' in venue_slug.lower():
+                    # Para Sala Rem: formato es /events/slug--fecha-CODIGO
+                    slug = href.split('/')[-1] if '/' in href else href
+                    parts = slug.split('-')
+                    if len(parts) > 0 and len(parts[-1]) == 4 and parts[-1].isalnum():
+                        code = parts[-1]
+                    else:
+                        code = slug  # Fallback
+                else:
+                    code = href.split('/')[-1] if '/' in href else href
+                
                 event = {
                     'url': href,
                     'venue_slug': venue_slug,
                     'name': card.get_text(strip=True) if card.name != 'a' else link_elem.get('aria-label', 'Evento'),
-                    'code': href.split('/')[-1]
+                    'code': code
                 }
                 events.append(event)
             except:
