@@ -318,6 +318,8 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Entradas</Text>
               <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
                 {party.ticketTypes.filter(t => t.isAvailable).length} tipos disponibles
+                {party.ticketTypes.filter(t => !t.isAvailable || t.isSoldOut).length > 0 && 
+                  ` • ${party.ticketTypes.filter(t => !t.isAvailable || t.isSoldOut).length} agotadas`}
               </Text>
 
               <View style={styles.ticketsList}>
