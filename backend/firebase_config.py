@@ -84,6 +84,8 @@ def upload_events_to_firestore(events_data):
     LOG_PATH = Path(__file__).parent.parent / ".cursor" / "debug.log"
     try:
         LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        first_event = events_data[0].get('evento', events_data[0]) if events_data else None
+        entradas_sample = first_event.get('entradas', [])[:3] if first_event else []
         log_entry = {
             "sessionId": "debug-session",
             "runId": "run1",
@@ -93,15 +95,21 @@ def upload_events_to_firestore(events_data):
             "data": {
                 "total_events": len(events_data),
                 "first_event_sample": {
-                    "evento_name": events_data[0].get('evento', {}).get('nombreEvento', 'N/A') if events_data else None,
-                    "entradas_sample": (events_data[0].get('evento', {}).get('entradas', [])[:3] if events_data else []).copy() if events_data else []
-                } if events_data else None
+                    "evento_name": first_event.get('nombreEvento', 'N/A') if first_event else None,
+                    "entradas_sample": [copy.deepcopy(e) for e in entradas_sample]
+                } if first_event else None
             },
             "timestamp": int(__import__('time').time() * 1000)
         }
         with open(LOG_PATH, 'a', encoding='utf-8') as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
             f.flush()
+        # También imprimir en stdout para GitHub Actions
+        print(f"[DEBUG C] firebase_config.py:66: ANTES de subir a Firebase - precios en eventos")
+        print(f"  → Total eventos: {len(events_data)}")
+        if first_event and entradas_sample:
+            print(f"  → Primer evento: {first_event.get('nombreEvento', 'N/A')}")
+            print(f"  → Entradas sample: {json.dumps([{'tipo': e.get('tipo'), 'precio': e.get('precio'), 'precio_type': type(e.get('precio')).__name__} for e in entradas_sample], ensure_ascii=False)}")
     except Exception as e:
         print(f"[DEBUG LOG ERROR] {e}", file=sys.stderr)
     # #endregion
@@ -116,6 +124,7 @@ def upload_events_to_firestore(events_data):
         
         # #region agent log
         try:
+            entradas_log = [copy.deepcopy(t) for t in event_dict.get('entradas', [])][:3]
             log_entry = {
                 "sessionId": "debug-session",
                 "runId": "run1",
@@ -124,15 +133,21 @@ def upload_events_to_firestore(events_data):
                 "message": "Evento ANTES de subir a Firestore",
                 "data": {
                     "event_name": event_dict.get('nombreEvento', 'N/A'),
-                    "entradas": [copy.deepcopy(t) for t in event_dict.get('entradas', [])][:3]
+                    "entradas": entradas_log
                 },
                 "timestamp": int(__import__('time').time() * 1000)
             }
             with open(LOG_PATH, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
                 f.flush()
-        except:
-            pass
+            # También imprimir en stdout para GitHub Actions (solo para eventos con "Luminata" o "27-12")
+            event_name = event_dict.get('nombreEvento', '')
+            if 'luminata' in event_name.lower() or '27-12' in event_name or '27/12' in event_name:
+                print(f"[DEBUG C] firebase_config.py:96: Evento Luminata 27-12 ANTES de subir")
+                print(f"  → Evento: {event_name}")
+                print(f"  → Entradas: {json.dumps([{'tipo': e.get('tipo'), 'precio': e.get('precio'), 'precio_type': type(e.get('precio')).__name__} for e in entradas_log], ensure_ascii=False)}")
+        except Exception as e:
+            print(f"[DEBUG LOG ERROR] {e}", file=sys.stderr)
         # #endregion
         
         # Generar un ID determinista si es posible, o dejar que Firestore asigne uno

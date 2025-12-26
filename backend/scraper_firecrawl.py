@@ -38,9 +38,14 @@ def debug_log(session_id, run_id, hypothesis_id, location, message, data):
             "data": data,
             "timestamp": int(datetime.now().timestamp() * 1000)
         }
+        # Escribir a archivo
         with open(LOG_PATH, 'a', encoding='utf-8') as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
             f.flush()  # Forzar escritura inmediata
+        # También imprimir en stdout para GitHub Actions
+        print(f"[DEBUG {hypothesis_id}] {location}: {message}", file=sys.stdout)
+        if 'precio' in str(data).lower() or 'price' in str(data).lower():
+            print(f"  → Precio data: {json.dumps(data, ensure_ascii=False)}", file=sys.stdout)
     except Exception as e:
         # Imprimir error para debugging si falla el logging
         print(f"[DEBUG LOG ERROR] {e}", file=sys.stderr)
