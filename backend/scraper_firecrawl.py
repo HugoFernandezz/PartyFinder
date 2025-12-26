@@ -804,6 +804,17 @@ def transform_to_app_format(events: List[Dict]) -> List[Dict]:
         # Construir entradas desde tickets extraídos
         entradas = []
         
+        # #region agent log
+        session_id = "debug-session"
+        run_id = "run1"
+        debug_log(session_id, run_id, "B", "scraper_firecrawl.py:804", "ANTES de transformar entradas", {
+            "event_name": event.get('name', 'N/A'),
+            "event_code": event.get('code', 'N/A'),
+            "tickets_from_event": [copy.deepcopy(t) for t in event.get('tickets', [])] if event.get('tickets') else None,
+            "prices_from_event": event.get('prices', [])
+        })
+        # #endregion
+        
         # Usar tickets extraídos si existen (hacer copia profunda para evitar mutaciones)
         if event.get('tickets'):
             entradas = [copy.deepcopy(t) for t in event['tickets']]
@@ -824,6 +835,14 @@ def transform_to_app_format(events: List[Dict]) -> List[Dict]:
                 "agotadas": False,
                 "url_compra": event.get('url', '')
             }]
+        
+        # #region agent log
+        debug_log(session_id, run_id, "B", "scraper_firecrawl.py:832", "DESPUÉS de transformar entradas", {
+            "event_name": event.get('name', 'N/A'),
+            "event_code": event.get('code', 'N/A'),
+            "entradas_finales": [copy.deepcopy(e) for e in entradas]
+        })
+        # #endregion
         
         # Usar tags extraídos o inferidos
         tags = event.get('tags', ['Fiesta'])

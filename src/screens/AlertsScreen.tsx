@@ -88,9 +88,6 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ navigation }) => {
 
     const handleDeleteAlert = (alert: NotificationAlert) => {
         // #region agent log
-        const logPath = Platform.OS === 'web' 
-            ? '/.cursor/debug.log' 
-            : require('path').join(require('os').homedir(), '.cursor', 'debug.log');
         try {
             const logEntry = {
                 sessionId: 'debug-session',

@@ -3,6 +3,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 import os
 import sys
+import copy
 
 # Configuración
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -67,6 +68,9 @@ def upload_events_to_firestore(events_data):
     """
     Sube la lista de eventos a Firestore.
     """
+    import json
+    from pathlib import Path
+    
     db = get_db()
     if not db: return
     
@@ -76,6 +80,32 @@ def upload_events_to_firestore(events_data):
 
     print(f"📤 Subiendo {len(events_data)} eventos a Firestore...")
     
+    # #region agent log
+    LOG_PATH = Path(__file__).parent.parent / ".cursor" / "debug.log"
+    try:
+        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        log_entry = {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "C",
+            "location": "firebase_config.py:66",
+            "message": "ANTES de subir a Firebase - precios en eventos",
+            "data": {
+                "total_events": len(events_data),
+                "first_event_sample": {
+                    "evento_name": events_data[0].get('evento', {}).get('nombreEvento', 'N/A') if events_data else None,
+                    "entradas_sample": (events_data[0].get('evento', {}).get('entradas', [])[:3] if events_data else []).copy() if events_data else []
+                } if events_data else None
+            },
+            "timestamp": int(__import__('time').time() * 1000)
+        }
+        with open(LOG_PATH, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+            f.flush()
+    except Exception as e:
+        print(f"[DEBUG LOG ERROR] {e}", file=sys.stderr)
+    # #endregion
+    
     events_ref = db.collection('eventos')
     batch = db.batch()
     count = 0
@@ -83,6 +113,27 @@ def upload_events_to_firestore(events_data):
     for item in events_data:
         # Los datos pueden venir envueltos en "evento" o planos
         event_dict = item.get('evento', item)
+        
+        # #region agent log
+        try:
+            log_entry = {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C",
+                "location": "firebase_config.py:96",
+                "message": "Evento ANTES de subir a Firestore",
+                "data": {
+                    "event_name": event_dict.get('nombreEvento', 'N/A'),
+                    "entradas": [copy.deepcopy(t) for t in event_dict.get('entradas', [])][:3]
+                },
+                "timestamp": int(__import__('time').time() * 1000)
+            }
+            with open(LOG_PATH, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+                f.flush()
+        except:
+            pass
+        # #endregion
         
         # Generar un ID determinista si es posible, o dejar que Firestore asigne uno
         # Para evitar problemas, usamos Firestore auto-id, ya que acabamos de borrar todo.
