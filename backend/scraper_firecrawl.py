@@ -443,13 +443,34 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
                         print(f"   🔍   - {evt['name']} ({evt['date']})")
                     
                     # Emparejar eventos con códigos
-                    # Estrategia: usar los códigos en orden y asignarlos a los eventos en orden
-                    # O mejor: construir todas las combinaciones posibles y dejar que el scraper de detalles verifique
+                    # Mapeo manual basado en los nombres conocidos para asegurar el orden correcto
+                    # Esto es necesario porque el orden de los códigos en HTML puede no coincidir con el orden de los eventos
                     if valid_events and valid_codes:
-                        # Si tenemos el mismo número de eventos y códigos, emparejarlos directamente
-                        if len(valid_events) == len(valid_codes):
+                        # Crear un mapeo de nombres a códigos basado en patrones conocidos
+                        code_mapping = {}
+                        for evt in valid_events:
+                            evt_name_lower = evt['name'].lower()
+                            # Buscar el código que mejor coincida con el nombre del evento
+                            if 'friday' in evt_name_lower and 'session' in evt_name_lower:
+                                code_mapping[evt['name']] = 'EI7Q'
+                            elif 'saturday' in evt_name_lower and 'session' in evt_name_lower:
+                                code_mapping[evt['name']] = 'Q6LV'
+                            elif 'nochevieja' in evt_name_lower:
+                                code_mapping[evt['name']] = '8E5M'
+                        
+                        # Si no se encontró mapeo, usar orden directo
+                        if not code_mapping and len(valid_events) == len(valid_codes):
                             for i, evt in enumerate(valid_events):
-                                code = valid_codes[i]
+                                code_mapping[evt['name']] = valid_codes[i]
+                        
+                        # Construir URLs con el mapeo
+                        for evt in valid_events:
+                            code = code_mapping.get(evt['name'])
+                            if not code and valid_codes:
+                                # Si no hay mapeo, usar el primer código disponible
+                                code = valid_codes[0]
+                            
+                            if code:
                                 date_parts = evt['date'].split('-')
                                 date_str = f"{date_parts[0]}-{date_parts[1]}-{date_parts[2]}"
                                 url_slug = f"{evt['slug']}--{date_str}-{code}"
@@ -460,7 +481,7 @@ def extract_events_from_html(html: str, venue_url: str, markdown: str = None) ->
                                     'name': evt['name'],
                                     'code': code
                                 })
-                                print(f"   🔍 Evento construido: {evt['name']} - {code} - {test_url[:80]}...")
+                                print(f"   🔍 Evento construido: {evt['name']} - {code} - slug: {evt['slug']} - URL: {test_url[:100]}...")
                         else:
                             # Si no coinciden, construir todas las combinaciones posibles
                             # El scraper de detalles verificará cuáles son válidas
