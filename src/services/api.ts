@@ -107,6 +107,10 @@ const transformData = (apiData: any[]): { venues: Venue[], parties: Party[] } =>
       date: eventoData.fecha,
       startTime: eventoData.hora_inicio,
       endTime: eventoData.hora_fin,
+      // Debug: Log para eventos con hora 00:00
+      // if (eventoData.hora_inicio === '00:00' || eventoData.hora_inicio === '0:00') {
+      //   console.log(`[DEBUG 00:00] ${eventoData.nombreEvento || eventoData.titulo} - Fecha guardada: ${eventoData.fecha} - Hora inicio: ${eventoData.hora_inicio}`);
+      // }
       price: ticketTypes.length > 0 && ticketTypes.some(t => t.price > 0)
         ? Math.min(...ticketTypes.map(t => t.price).filter(p => p > 0))
         : 0,
@@ -127,8 +131,13 @@ const transformData = (apiData: any[]): { venues: Venue[], parties: Party[] } =>
 
     // Solo añadir si tiene fecha y título mínimo
     if (party.date && party.title) {
-      parties.push(party);
+    // Debug: Log para eventos con hora 00:00
+    if (eventoData.hora_inicio === '00:00' || eventoData.hora_inicio === '0:00') {
+      console.log(`[DEBUG 00:00] ${eventoData.nombreEvento || eventoData.titulo} - Fecha guardada: ${eventoData.fecha} - Hora inicio: ${eventoData.hora_inicio}`);
     }
+    
+    parties.push(party);
+  }
   });
 
   return { venues, parties };

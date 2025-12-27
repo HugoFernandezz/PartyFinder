@@ -47,9 +47,17 @@ export const PartyCard: React.FC<PartyCardProps> = ({ party, onPress }) => {
   const isSoldOut = !party.isAvailable;
   const hasFewLeft = party.fewLeft && !isSoldOut;
 
+  // Función helper para parsear fecha sin problemas de zona horaria
+  const parseLocalDate = (dateStr: string): Date => {
+    // Parsear YYYY-MM-DD manualmente para evitar problemas de zona horaria
+    const [year, month, day] = dateStr.split('-').map(Number);
+    // new Date(year, monthIndex, day) crea la fecha en hora local
+    return new Date(year, month - 1, day);
+  };
+
   // Formatear fecha
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const day = date.getDate();
     const month = date.toLocaleDateString('es-ES', { month: 'short' });
     return { day, month: month.toUpperCase() };

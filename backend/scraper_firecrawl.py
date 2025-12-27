@@ -1729,6 +1729,21 @@ def transform_to_app_format(events: List[Dict]) -> List[Dict]:
         })
         # #endregion
         
+        # Ajustar fecha si la hora de inicio es 00:00
+        # Un evento que empieza a las 00:00 pertenece al día anterior
+        # Ejemplo: Si la URL dice --28-12-2025- y el evento empieza a las 00:00,
+        # el evento realmente es del 27 (sábado 27 a las 00:00 = inicio del sábado 27)
+        hora_inicio = event.get('hora_inicio', '23:00')
+        if hora_inicio == '00:00' or hora_inicio == '0:00':
+            try:
+                from datetime import timedelta
+                fecha_obj = datetime.strptime(fecha, '%Y-%m-%d')
+                fecha_obj = fecha_obj - timedelta(days=1)
+                fecha = fecha_obj.strftime('%Y-%m-%d')
+                print(f"      🔧 Ajuste de fecha por hora 00:00: {event.get('name', 'Evento')} -> {fecha}")
+            except Exception as e:
+                print(f"      ⚠️ Error ajustando fecha para hora 00:00: {e}")
+        
         # Usar tags extraídos o inferidos
         tags = event.get('tags', ['Fiesta'])
         
@@ -1740,7 +1755,7 @@ def transform_to_app_format(events: List[Dict]) -> List[Dict]:
                 "nombreEvento": event.get('name', 'Evento'),
                 "descripcion": event.get('description', ''),
                 "fecha": fecha,
-                "hora_inicio": event.get('hora_inicio', '23:00'),
+                "hora_inicio": hora_inicio,
                 "hora_fin": event.get('hora_fin', '06:00'),
                 "imagen_url": event.get('image', ''),
                 "url_evento": event.get('url', ''),

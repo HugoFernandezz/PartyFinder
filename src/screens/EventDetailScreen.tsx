@@ -41,9 +41,17 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ route, nav
     ? { style: [styles.container, styles.containerWeb, { backgroundColor: colors.background }] }
     : { style: [styles.container, { backgroundColor: colors.background }] };
 
+  // Función helper para parsear fecha sin problemas de zona horaria
+  const parseLocalDate = (dateStr: string): Date => {
+    // Parsear YYYY-MM-DD manualmente para evitar problemas de zona horaria
+    const [year, month, day] = dateStr.split('-').map(Number);
+    // new Date(year, monthIndex, day) crea la fecha en hora local
+    return new Date(year, month - 1, day);
+  };
+
   // Formatear fecha
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return date.toLocaleDateString('es-ES', {
       weekday: 'long',
       day: 'numeric',

@@ -63,8 +63,16 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ navigation }) => {
         }
     };
 
+    // Función helper para parsear fecha sin problemas de zona horaria
+    const parseLocalDate = (dateStr: string): Date => {
+        // Parsear YYYY-MM-DD manualmente para evitar problemas de zona horaria
+        const [year, month, day] = dateStr.split('-').map(Number);
+        // new Date(year, monthIndex, day) crea la fecha en hora local
+        return new Date(year, month - 1, day);
+    };
+
     const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
+        const date = parseLocalDate(dateStr);
         return date.toLocaleDateString('es-ES', {
             weekday: 'long',
             day: 'numeric',

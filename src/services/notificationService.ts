@@ -200,8 +200,12 @@ export const notificationService = {
                     event.venueName.toLowerCase().includes(alert.venueName.toLowerCase());
 
                 if (dateMatches && venueMatches) {
-                    // Format notification
-                    const formattedDate = new Date(event.date).toLocaleDateString('es-ES', {
+                    // Format notification - usar parseLocalDate para evitar problemas de zona horaria
+                    const parseLocalDate = (dateStr: string): Date => {
+                        const [year, month, day] = dateStr.split('-').map(Number);
+                        return new Date(year, month - 1, day);
+                    };
+                    const formattedDate = parseLocalDate(event.date).toLocaleDateString('es-ES', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',

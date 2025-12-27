@@ -42,6 +42,14 @@ interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
 }
 
+// Función helper para parsear fecha sin problemas de zona horaria
+const parseLocalDate = (dateStr: string): Date => {
+  // Parsear YYYY-MM-DD manualmente para evitar problemas de zona horaria
+  const [year, month, day] = dateStr.split('-').map(Number);
+  // new Date(year, monthIndex, day) crea la fecha en hora local
+  return new Date(year, month - 1, day);
+};
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,8 +154,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     // Ordenar: Si es "Todas", por fecha. Si es un día específico, por título/hora.
     return filtered.sort((a, b) => {
       if (!selectedDate) {
-        // Ordenar por fecha asc
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
+        // Ordenar por fecha asc - usar parseLocalDate para evitar problemas de zona horaria
+        return parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime();
       }
       return a.title.localeCompare(b.title);
     });
@@ -179,7 +187,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, [navigation]);
 
   const formatSectionDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       day: 'numeric',
@@ -223,7 +231,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           {selectedDate && (
             <View style={[styles.calendarBadge, { backgroundColor: colors.primary }]}>
               <Text style={styles.calendarBadgeText}>
-                {new Date(selectedDate).getDate()}
+                {parseLocalDate(selectedDate).getDate()}
               </Text>
             </View>
           )}
