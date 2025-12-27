@@ -208,8 +208,8 @@ export const notificationService = {
                     });
 
                     await this.showNotification(
-                        '🎉 ¡Nuevas entradas disponibles!',
-                        `${event.title} en ${event.venueName} - ${formattedDate}`,
+                        `🎉 ¡${event.venueName} ya sacó entradas!`,
+                        `${event.venueName} - ${formattedDate} - ${event.title}`,
                         { eventId: event.id }
                     );
 
