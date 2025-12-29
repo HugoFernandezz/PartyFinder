@@ -36,18 +36,8 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     // Request notification permissions and get FCM token on app start
     const initializeNotifications = async () => {
-      const token = await notificationService.requestPermissions();
-      if (token) {
-        console.log('='.repeat(50));
-        console.log('🔑 TOKEN PARA TEST DE NOTIFICACIONES PUSH:');
-        console.log('='.repeat(50));
-        console.log(token);
-        console.log('='.repeat(50));
-        console.log('💡 Copia este token y úsalo con:');
-        console.log('   python backend/test_push_notification.py ' + token);
-        console.log('='.repeat(50));
-        // Token is automatically saved in notificationService
-      }
+      await notificationService.requestPermissions();
+      // Token is automatically saved in notificationService
     };
     initializeNotifications();
   }, []);

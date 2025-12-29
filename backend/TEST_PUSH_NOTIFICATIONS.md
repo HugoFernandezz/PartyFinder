@@ -80,3 +80,4 @@ Si todo funciona correctamente, deberías:
 - Las notificaciones push reales se envían desde el backend cuando hay nuevos eventos
 - El botón de debug en la app es temporal y se puede eliminar después de las pruebas
 
+
