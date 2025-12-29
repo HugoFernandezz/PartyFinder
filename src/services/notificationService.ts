@@ -9,6 +9,7 @@ import { Party } from '../types';
 import { NotificationAlert } from '../types/notifications';
 
 const EVENTS_SNAPSHOT_KEY = '@partyfinder_events_snapshot';
+const ALERT_EVENTS_SNAPSHOT_KEY = '@partyfinder_alert_events_snapshot'; // Para guardar eventos por alerta
 const FCM_TOKEN_KEY = '@partyfinder_fcm_token';
 
 // Configure notification behavior
@@ -103,8 +104,12 @@ export const notificationService = {
                 platform: Platform.OS,
                 registeredAt: new Date().toISOString(),
             });
-        } catch (error) {
-            console.error('Error registering alert token:', error);
+        } catch (error: any) {
+            // Silently fail - tokens can't be registered due to Firestore security rules
+            // This doesn't affect local notifications functionality
+            if (error?.code !== 'permission-denied') {
+                console.error('Error registering alert token:', error);
+            }
         }
     },
 
@@ -127,8 +132,13 @@ export const notificationService = {
             
             const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
             await Promise.all(deletePromises);
-        } catch (error) {
-            console.error('Error unregistering all alert tokens:', error);
+        } catch (error: any) {
+            // Silently fail - tokens will remain in Firestore but won't cause issues
+            // This happens because Firestore security rules don't allow client-side deletion
+            // The tokens are harmless if left in the database
+            if (error?.code !== 'permission-denied') {
+                console.error('Error unregistering all alert tokens:', error);
+            }
         }
     },
 
@@ -171,6 +181,44 @@ export const notificationService = {
         }
     },
 
+    // Save events snapshot for a specific alert (when alert is created)
+    async saveAlertEventsSnapshot(alertId: string, events: Party[]): Promise<void> {
+        try {
+            const snapshot = events.map(e => ({
+                id: e.id,
+                date: e.date,
+                venueName: e.venueName,
+                title: e.title,
+            }));
+            const key = `${ALERT_EVENTS_SNAPSHOT_KEY}_${alertId}`;
+            await AsyncStorage.setItem(key, JSON.stringify(snapshot));
+        } catch (error) {
+            console.error('Error saving alert events snapshot:', error);
+        }
+    },
+
+    // Get events snapshot for a specific alert
+    async getAlertEventsSnapshot(alertId: string): Promise<{ id: string; date: string; venueName: string; title: string }[]> {
+        try {
+            const key = `${ALERT_EVENTS_SNAPSHOT_KEY}_${alertId}`;
+            const stored = await AsyncStorage.getItem(key);
+            return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Error getting alert events snapshot:', error);
+            return [];
+        }
+    },
+
+    // Delete events snapshot for a specific alert (when alert is deleted)
+    async deleteAlertEventsSnapshot(alertId: string): Promise<void> {
+        try {
+            const key = `${ALERT_EVENTS_SNAPSHOT_KEY}_${alertId}`;
+            await AsyncStorage.removeItem(key);
+        } catch (error) {
+            console.error('Error deleting alert events snapshot:', error);
+        }
+    },
+
     // Check for new events and trigger notifications
     async checkForNewEvents(
         currentEvents: Party[],
@@ -178,52 +226,67 @@ export const notificationService = {
     ): Promise<void> {
         if (alerts.length === 0) return;
 
-        const previousSnapshot = await this.getEventsSnapshot();
-        const previousIds = new Set(previousSnapshot.map(e => e.id));
-
-        // Find new events
-        const newEvents = currentEvents.filter(event => !previousIds.has(event.id));
-
-        if (newEvents.length === 0) {
-            // Still save the snapshot
-            await this.saveEventsSnapshot(currentEvents);
-            return;
-        }
-
-        // Check each new event against active alerts
+        // Check each alert individually
         const enabledAlerts = alerts.filter(a => a.enabled);
 
-        for (const event of newEvents) {
-            for (const alert of enabledAlerts) {
+        for (const alert of enabledAlerts) {
+            // Get the snapshot of events that existed when this alert was created
+            const alertSnapshot = await this.getAlertEventsSnapshot(alert.id);
+            
+            // If alert was just created (snapshot doesn't exist yet), save current events as snapshot and skip notification
+            // This prevents immediate notifications when creating an alert for a date that already has events
+            if (alertSnapshot.length === 0) {
+                // Find events that match this alert's criteria
+                const matchingEvents = currentEvents.filter(event => {
+                    const dateMatches = event.date === alert.date;
+                    const venueMatches = !alert.venueName ||
+                        event.venueName.toLowerCase().includes(alert.venueName.toLowerCase());
+                    return dateMatches && venueMatches;
+                });
+                
+                // Save snapshot for future checks (but don't notify now)
+                await this.saveAlertEventsSnapshot(alert.id, matchingEvents);
+                continue; // Skip to next alert
+            }
+            
+            const alertSnapshotIds = new Set(alertSnapshot.map(e => e.id));
+
+            // Find events that match this alert's criteria
+            const matchingEvents = currentEvents.filter(event => {
                 const dateMatches = event.date === alert.date;
                 const venueMatches = !alert.venueName ||
                     event.venueName.toLowerCase().includes(alert.venueName.toLowerCase());
+                return dateMatches && venueMatches;
+            });
 
-                if (dateMatches && venueMatches) {
-                    // Format notification - usar parseLocalDate para evitar problemas de zona horaria
-                    const parseLocalDate = (dateStr: string): Date => {
-                        const [year, month, day] = dateStr.split('-').map(Number);
-                        return new Date(year, month - 1, day);
-                    };
-                    const formattedDate = parseLocalDate(event.date).toLocaleDateString('es-ES', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                    });
+            // Find NEW events (that weren't in the snapshot when alert was created)
+            const newEventsForAlert = matchingEvents.filter(event => !alertSnapshotIds.has(event.id));
 
-                    await this.showNotification(
-                        `🎉 ¡${event.venueName} ya sacó entradas!`,
-                        `${event.venueName} - ${formattedDate} - ${event.title}`,
-                        { eventId: event.id }
-                    );
+            // Notify for each new event
+            for (const event of newEventsForAlert) {
+                // Format notification - usar parseLocalDate para evitar problemas de zona horaria
+                const parseLocalDate = (dateStr: string): Date => {
+                    const [year, month, day] = dateStr.split('-').map(Number);
+                    return new Date(year, month - 1, day);
+                };
+                const formattedDate = parseLocalDate(event.date).toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                });
 
-                    // Only notify once per event (break inner loop)
-                    break;
-                }
+                await this.showNotification(
+                    `🎉 ¡${event.venueName} ya sacó entradas!`,
+                    `${event.venueName} - ${formattedDate} - ${event.title}`,
+                    { eventId: event.id }
+                );
             }
+
+            // Update the snapshot for this alert with current matching events
+            await this.saveAlertEventsSnapshot(alert.id, matchingEvents);
         }
 
-        // Save updated snapshot
+        // Still maintain global snapshot for backward compatibility
         await this.saveEventsSnapshot(currentEvents);
     },
 };

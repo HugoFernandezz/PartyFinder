@@ -32,7 +32,8 @@ LocaleConfig.locales['es'] = {
   monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
   dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
   dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-  today: 'Hoy'
+  today: 'Hoy',
+  firstDayOfWeek: 1 // Lunes (0 = Domingo, 1 = Lunes)
 };
 LocaleConfig.defaultLocale = 'es';
 
@@ -399,6 +400,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   </TouchableOpacity>
                 </View>
                 <Calendar
+                  firstDay={1}
                   markedDates={markedDates}
                   onDayPress={(day: { dateString: string }) => {
                     setSelectedDate(day.dateString);

@@ -27,7 +27,8 @@ LocaleConfig.locales['es'] = {
     monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
     dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
     dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-    today: 'Hoy'
+    today: 'Hoy',
+    firstDayOfWeek: 1 // Lunes (0 = Domingo, 1 = Lunes)
 };
 LocaleConfig.defaultLocale = 'es';
 
@@ -37,7 +38,7 @@ interface AlertsScreenProps {
 
 export const AlertsScreen: React.FC<AlertsScreenProps> = ({ navigation }) => {
     const { colors, isDark } = useTheme();
-    const { alerts, addAlert, removeAlert, toggleAlert, isLoading } = useAlerts();
+    const { alerts, addAlert, removeAlert, isLoading } = useAlerts();
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -86,8 +87,10 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ navigation }) => {
             return;
         }
 
+        // Get current events to save snapshot (so we only notify for NEW events after alert creation)
+        const currentEvents = await apiService.getParties();
         const venueName = selectedVenue === 'Todas las discotecas' ? undefined : selectedVenue;
-        await addAlert(selectedDate, venueName);
+        await addAlert(selectedDate, venueName, currentEvents);
 
         setShowCreateModal(false);
         setSelectedDate(null);
@@ -193,16 +196,6 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ navigation }) => {
                 </View>
                 <View style={styles.alertActions}>
                     <TouchableOpacity
-                        style={[styles.toggleButton, { backgroundColor: item.enabled ? colors.primary : colors.border }]}
-                        onPress={() => toggleAlert(item.id)}
-                    >
-                        <Ionicons
-                            name={item.enabled ? 'notifications' : 'notifications-off'}
-                            size={18}
-                            color={item.enabled ? contentOnPrimary : colors.textSecondary}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
                         style={[
                             styles.deleteButton,
                             Platform.OS === 'web' && styles.deleteButtonWeb
@@ -294,6 +287,7 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ navigation }) => {
                                 ¿Qué día?
                             </Text>
                             <Calendar
+                                firstDay={1}
                                 onDayPress={(day: { dateString: string }) => setSelectedDate(day.dateString)}
                                 markedDates={selectedDate ? {
                                     [selectedDate]: { selected: true, selectedColor: colors.primary }
@@ -430,13 +424,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-    },
-    toggleButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     deleteButton: {
         width: 36,

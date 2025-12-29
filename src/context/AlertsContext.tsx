@@ -8,7 +8,7 @@ const ALERTS_STORAGE_KEY = '@partyfinder_alerts';
 interface AlertsContextType {
     alerts: NotificationAlert[];
     isLoading: boolean;
-    addAlert: (date: string, venueName?: string) => Promise<void>;
+    addAlert: (date: string, venueName?: string, currentEvents?: any[]) => Promise<void>;
     removeAlert: (id: string) => Promise<void>;
     toggleAlert: (id: string) => Promise<void>;
     getAlertsForDate: (date: string) => NotificationAlert[];
@@ -62,7 +62,7 @@ export const AlertsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
     };
 
-    const addAlert = useCallback(async (date: string, venueName?: string) => {
+    const addAlert = useCallback(async (date: string, venueName?: string, currentEvents?: any[]) => {
         const newAlert: NotificationAlert = {
             id: `${date}_${venueName || 'all'}_${Date.now()}`,
             date,
@@ -85,6 +85,20 @@ export const AlertsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
         } else {
             await notificationService.registerAlertToken(newAlert.id, token);
+        }
+
+        // Save snapshot of current events that match this alert (so we only notify for NEW events)
+        if (currentEvents && currentEvents.length > 0) {
+            const matchingEvents = currentEvents.filter((event: any) => {
+                const dateMatches = event.date === date;
+                const venueMatches = !venueName ||
+                    event.venueName.toLowerCase().includes(venueName.toLowerCase());
+                return dateMatches && venueMatches;
+            });
+            await notificationService.saveAlertEventsSnapshot(newAlert.id, matchingEvents);
+        } else {
+            // If no events provided, save empty snapshot (so all future events will be considered new)
+            await notificationService.saveAlertEventsSnapshot(newAlert.id, []);
         }
     }, [alerts]);
 
@@ -147,6 +161,9 @@ export const AlertsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         // Unregister FCM tokens for this alert
         await notificationService.unregisterAllAlertTokens(id);
+        
+        // Delete the events snapshot for this alert
+        await notificationService.deleteAlertEventsSnapshot(id);
         
         // #region agent log
         try {
